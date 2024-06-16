@@ -20,12 +20,12 @@
 ##
 golem::fill_desc(
   pkg_name = "vocomatcher", # The Name of the package containing the App
-  pkg_title = "PKG_TITLE", # The Title of the package containing the App
-  pkg_description = "PKG_DESC.", # The Description of the package containing the App
-  author_first_name = "AUTHOR_FIRST", # Your First Name
-  author_last_name = "AUTHOR_LAST", # Your Last Name
-  author_email = "AUTHOR@MAIL.COM", # Your Email
-  repo_url = NULL, # The URL of the GitHub Repo (optional),
+  pkg_title = "VocoMatcher", # The Title of the package containing the App
+  pkg_description = "A Shiny app to visually match animal vocalizations in microphone-array PAM studies.", # The Description of the package containing the App
+  author_first_name = "Anthony", # Your First Name
+  author_last_name = "Dalamagas", # Your Last Name
+  author_email = "anthony.dalamagas@gmail.com", # Your Email
+  repo_url = "https://github.com/jaytohe/ecostats-rshiny", # The URL of the GitHub Repo (optional),
   pkg_version = "0.0.0.9000" # The Version of the package containing the App
 )
 
@@ -37,14 +37,14 @@ golem::install_dev_deps()
 
 ## Create Common Files ----
 ## See ?usethis for more information
-usethis::use_mit_license("Golem User") # You can set another license here
+usethis::use_mit_license("jaytohe (Anthony Dalamagas)") # You can set another license here
 usethis::use_readme_rmd(open = FALSE)
 devtools::build_readme()
 # Note that `contact` is required since usethis version 2.1.5
 # If your {usethis} version is older, you can remove that param
-usethis::use_code_of_conduct(contact = "Golem User")
+usethis::use_code_of_conduct(contact = "jaytohe (Anthony Dalamagas)")
 usethis::use_lifecycle_badge("Experimental")
-usethis::use_news_md(open = FALSE)
+#usethis::use_news_md(open = FALSE)
 
 ## Use git ----
 usethis::use_git()

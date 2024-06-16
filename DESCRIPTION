@@ -1,13 +1,9 @@
 Package: vocomatcher
-Title: An Amazing Shiny App
+Title: VocoMatcher
 Version: 0.0.0.9000
-Authors@R: 
-    person(given = "firstname",
-           family = "lastname",
-           role = c("aut", "cre"),
-           email = "your@email.com")
-Description: What the package does (one paragraph).
-License: What license is it under?
+Authors@R: person('Anthony', 'Dalamagas', email = 'anthony.dalamagas@gmail.com', role = c('cre', 'aut'))
+Description: A Shiny app to visually match animal vocalizations in microphone-array PAM studies.
+License: MIT + file LICENSE
 Imports: 
     config (>= 0.3.2),
     golem (>= 0.4.1),
@@ -15,3 +11,10 @@ Imports:
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.1.1
+URL: https://github.com/jaytohe/ecostats-rshiny
+BugReports: https://github.com/jaytohe/ecostats-rshiny/issues
+Suggests: 
+    spelling,
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
+Language: en-US
