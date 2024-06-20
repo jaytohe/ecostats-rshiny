@@ -10,7 +10,8 @@ app_ui <- function(request) {
     golem_add_external_resources(),
     # Your application UI logic
     fluidPage(
-      h1("vocomatcher")
+      h1("vocomatcher"),
+      mod_file_upload_ui("file_upload_1")
     )
   )
 }
