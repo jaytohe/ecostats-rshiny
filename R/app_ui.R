@@ -11,7 +11,12 @@ app_ui <- function(request) {
     # Your application UI logic
     fluidPage(
       h1("vocomatcher"),
-      mod_file_upload_ui("file_upload_1")
+      mod_wizard_ui("vocostep",
+                    list(
+                      mod_file_upload_ui("file_upload_1"),
+                      mod_date_select_ui("date_select_1")
+                     ),
+                    doneButton=actionButton("done", "Submit"))
     )
   )
 }

@@ -17,11 +17,17 @@
 ## Amend DESCRIPTION with dependencies read from package code parsing
 ## install.packages('attachment') # if needed.
 usethis::use_package("vroom")
+usethis::use_package("lubridate")
 attachment::att_amend_desc()
 
 ## Add modules ----
 ## Create a module infrastructure in R/
 golem::add_module(name = "file_upload", with_test = TRUE) # Name of the module
+golem::add_module(
+  name = "wizard",
+  fct = "page_handling",
+)
+golem::add_module(name = "date_select", with_test = TRUE)
 
 ## Add helper functions ----
 ## Creates fct_* and utils_*
