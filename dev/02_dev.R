@@ -18,6 +18,9 @@
 ## install.packages('attachment') # if needed.
 usethis::use_package("vroom")
 usethis::use_package("lubridate")
+usethis::use_package("shinyWidgets")
+usethis::use_package("magrittr")
+
 attachment::att_amend_desc()
 
 ## Add modules ----
@@ -28,6 +31,13 @@ golem::add_module(
   fct = "page_handling",
 )
 golem::add_module(name = "date_select", with_test = TRUE)
+
+golem::add_module(
+  name = "match_calls",
+  fct = "backend",
+  js = "call_handler",
+  with_test = TRUE
+)
 
 ## Add helper functions ----
 ## Creates fct_* and utils_*

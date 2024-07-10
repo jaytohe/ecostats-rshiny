@@ -10,21 +10,29 @@
 mod_file_upload_ui <- function(id){
   ns <- NS(id)
   tagList(
-    layout_columns(
-      #col_widths=c(1,1,1,1), # Create a 2x2 grid; 12 is max col width; evenly divide it into two for each row.
-      fileInput(
+    fluidRow(
+      column(6, fileInput(
         inputId=ns("microphones"),
         label="Upload microphones coordinates",
         accept=c("text/csv"),
-        buttonLabel="Upload..."),
-      fileInput(
+        buttonLabel="Upload...")),
+      column(6, fileInput(
         inputId=ns("recordings"),
         label="Upload recordings data",
         accept=c("text/csv"),
-        buttonLabel="Upload..."),
-      tableOutput(ns("tblMics")),
-      tableOutput(ns("tblRecs"))
+        buttonLabel="Upload..."))
     ),
+    fluidRow(
+      column(4, div(
+        id="file_upload_div_mics",
+        tableOutput(ns("tblMics")),
+      )),
+      column(2, div()),
+      column(6, div(
+        id="file_upload_div_recs",
+        tableOutput(ns("tblRecs"))
+      ))
+    )
     )
 }
 

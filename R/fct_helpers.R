@@ -25,6 +25,36 @@ read_csv_vroom <- function(datapath, ...) {
 
 }
 
+
+#' Remaining/Unmatched calls calculation Function
+#'
+#' @description
+#' This function returns a tibble of the number of unmatched calls per day.
+#'
+#' @details
+#' This function uses the datetime column of the passed-in recordings tibble to group calls by day
+#' and count how many calls exist per day. This allows to quickly pick a day of calls they
+#' would like to work on.
+#'
+#' @param recordings A tibble containing the recorded calls read from a csv.
+#' @returns standardised recordings data with parsed time of arrival as datetime object.
+#' @noRd
+#'
+#' @importFrom dplyr mutate group_by summarise n rename select arrange
+#' @importFrom lubridate ymd_hms date stamp
+
+parse_rec_data <- function(recordings) {
+  recordings %>%
+    #which columns to select
+    select(c(recording_ID, mic_ID, GPSDatetime2, measured_bearing, measured_gender)) %>%
+    # rename columns to standard format
+    rename(rec_id = recording_ID, mic_id = mic_ID, toa = GPSDatetime2, bearing = measured_bearing, sex = measured_gender) %>%
+    # parse toa as date object
+    mutate(toa = ymd_hms(toa)) %>%
+    # order by toa ascending
+    arrange(toa)
+}
+
 show_alert <- function(msg, title) {
   golem::invoke_js("erroralert", list(title=title, msg=msg))
 }

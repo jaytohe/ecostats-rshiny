@@ -1,4 +1,5 @@
 /* Add horizontal scroll panes to the tables in file upload page if they are too big too fit. /* */
-#file_upload_1-tblRecs {
+#file_upload_div_mics, #file_upload_div_recs {
   overflow-x: auto;
+  overflow-y: auto;
 }

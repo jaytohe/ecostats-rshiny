@@ -26,15 +26,25 @@ mod_date_select_ui <- function(id){
 mod_date_select_server <- function(id, r){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
-    num_calls_by_day <- reactive({
-      req(r$recData)
-      optData <- attempt(calc_remaining_calls_by_day(r$recData))
+
+    observeEvent(r$recData, {
+      optData <- attempt(parse_rec_data(r$recData))
       if (is_try_error(optData)) {
-        stop("Failed to calculate number of calls by day!")
+        golem::invoke_js("erroralert", list(title="Parse error!", msg="Failed to parse recording data. Check stacktrace!"))
       } else {
-        return(optData)
+        r$recParsedData <- optData
       }
     })
+
+    num_calls_by_day <- reactive({
+      req(r$recParsedData)
+      optSelectedCalls <- attempt(calc_remaining_calls_by_day(r$recParsedData))
+      if (is_try_error(optSelectedCalls)) {
+          stop("Failed to calculate number of calls by day!")
+      } else {
+          return(optSelectedCalls)
+      }
+      })
     output$availableDates <- renderTable(num_calls_by_day())
     })
 }

@@ -53,6 +53,11 @@ drop_nulls <- function(x) {
   }
 }
 
+#' Export the magrittr pipe function globally.
+#'
+#' @noRd
+"%>%" <- magrittr::"%>%"
+
 #' Typing reactiveValues is too long
 #'
 #' @inheritParams reactiveValues

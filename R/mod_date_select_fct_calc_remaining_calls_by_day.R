@@ -13,11 +13,11 @@
 #' @noRd
 #'
 #' @importFrom dplyr mutate group_by summarise n
-#' @importFrom lubridate ymd_hms date stamp
+#' @importFrom lubridate stamp
 #'
 calc_remaining_calls_by_day <- function(recordings) {
-  recordings |>
-    mutate(Date = stamp("31/12/1990")(ymd_hms(measured_call_datetime))) |>
-    group_by(Date) |>
+  recordings %>%
+    mutate(Date = stamp("31/12/1990")(toa)) %>%
+    group_by(Date) %>%
     summarise(Calls = n())
 }

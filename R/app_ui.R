@@ -3,6 +3,7 @@
 #' @param request Internal parameter for `{shiny}`.
 #'     DO NOT REMOVE.
 #' @import shiny
+#' @importFrom bslib bs_theme
 #' @noRd
 app_ui <- function(request) {
   tagList(
@@ -10,11 +11,14 @@ app_ui <- function(request) {
     golem_add_external_resources(),
     # Your application UI logic
     fluidPage(
+      theme = bs_theme(version = 5, bootswatch="default"),
       h1("vocomatcher"),
       mod_wizard_ui("vocostep",
                     list(
                       mod_file_upload_ui("file_upload_1"),
-                      mod_date_select_ui("date_select_1")
+                      mod_date_select_ui("date_select_1"),
+                      ## To be copied in the UI
+                      mod_match_calls_ui("match_calls_1")
                      ),
                     doneButton=actionButton("done", "Submit"))
     )

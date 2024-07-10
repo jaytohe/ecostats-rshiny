@@ -10,7 +10,9 @@ Imports:
     config (>= 0.3.2),
     golem (>= 0.4.1),
     lubridate,
+    magrittr,
     shiny (>= 1.8.1.1),
+    shinyWidgets,
     tools,
     vroom
 Suggests: 
