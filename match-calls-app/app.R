@@ -114,6 +114,7 @@ server <- function(input, output, session){
     if (
       # If no row is selected
       is.null(input$unmatched_calls_rows_selected)
+      || length(input$unmatched_calls_rows_selected) == 0
       ){
       return(frontendData() %>%
         mutate(timediff = "-"))
@@ -136,7 +137,7 @@ server <- function(input, output, session){
 
       # Populate timediff col with time differences between selected row and other columns.
       frontendData() %>%
-        mutate(timediff = interval(selected_row$toa, toa) %>% as.period %>% as.character())
+        mutate(timediff = interval(selected_row$toa, toa) %>% as.period %>% as.character)
     }
   })
 
