@@ -11,7 +11,6 @@ library(shiny)
 library(bslib)
 library(DT)
 library(purrr)
-library(shinyWidgets)
 library(lubridate)
 library(dplyr)
 library(magrittr)
@@ -48,27 +47,6 @@ ui <- fluidPage(
 )
 )
 
-generate_date_slider <- function(min_date, max_date) {
-
-
-  # Generate all timestampts from min_date to max_date with step=second.
-  time_labels <- seq(min_date, max_date, by="sec")
-  # Convert time labels to HH:MM:SS strings.
-  time_labels <- time_labels %>% purrr::map(\(t) paste0(hour(t), ':', minute(t), ':', second(t)))
-
-  golem::print_dev(head(time_labels))
-  golem::print_dev(tail(time_labels))
-  return(
-    sliderTextInput(
-      "selected_scope_time_range",
-      "Select Time Scope: ",
-      time_labels,
-      selected = c(time_labels[[1]], time_labels[[length(time_labels)]])
-    )
-  )
-
-}
-
 parse_rec_data <- function(recordings) {
   recordings %>%
     #which columns to select
@@ -85,7 +63,7 @@ server <- function(input, output, session){
 
   r <- list(recParsedData = NULL, micData = NULL)
 
-  rawRecData <- read.csv("recording.csv")
+  rawRecData <- read.csv("recording.csv", tryLogical = F)
   rawMicData <- read.csv("mic.csv")
 
   r$recParsedData <- parse_rec_data(rawRecData)
@@ -96,45 +74,82 @@ server <- function(input, output, session){
         select(toa) %>%
         summarise(min_date = min(toa), max_date=max(toa))
 
-      golem::print_dev(date_limits)
-
-      return(generate_date_slider(date_limits$min_date, date_limits$max_date))
+      print(date_limits)
+      sliderInput(
+        "selected_scope_time_range",
+        "Select Time Scope: ",
+        min = date_limits$min_date,
+        max = date_limits$max_date,
+        value = c(date_limits$min_date, date_limits$max_date),
+        timeFormat = "%H:%M:%S",
+        timezone = "+0000" # we assume that all times are UTC
+      )
 
     })
 
+  in_scoped_time_range <- reactive({
+    if (is.null(input$selected_scope_time_range)) {
+      return(NA)
+    }
+    #return(\(x) between(x,input$selected_scope_time_range[[1]], input$selected_scope_time_range[[2]]))
+    #return(\(x) x %within% interval(input$selected_scope_time_range[[1]], input$selected_scope_time_range[[2]]))
+    return(interval(input$selected_scope_time_range[[1]], input$selected_scope_time_range[[2]]))
+  })
 
-  frontendData <- r$recParsedData %>%
+  frontendData <- reactive({
+    out <- r$recParsedData %>%
     mutate(
       timediff = "-",
-      toa = paste0(hour(toa), ':', minute(toa), ':', second(toa)),
-      # If sex is read in as Boolean, show it as "T"
-      sex = ifelse(is.na(sex), "-", ifelse(is.logical(sex), ifelse(sex, "M", "F"), sex))
     ) %>%
     select(rec_id, mic_id, toa, timediff, sex, spectrogram)
 
-  frontend_data_reactive <- reactive({
-    input$unmatched_calls_rows_selected # take a reactive dependency on row selected
+    if(!is.na(in_scoped_time_range())) {
+      out<- out %>%
+        filter(toa %within% in_scoped_time_range())
+    }
+    return(out)
+    })
 
-    if (is.null(input$unmatched_calls_rows_selected)) {
-      frontendData %>%
-        mutate(timediff = "-")
+  time_diffed_data <- reactive({
+    if (
+      # If no row is selected
+      is.null(input$unmatched_calls_rows_selected)
+      ){
+      return(frontendData() %>%
+        mutate(timediff = "-"))
     }
     else {
-      # Get selected row from back-end table.
-      selected_row <- frontendData %>%
+      # Get recording ID of selected row.
+      selected_rec_id <- frontendData() %>%
         slice(input$unmatched_calls_rows_selected) %>%
-        pull(rec_id) %>%
-        slice(r$recParsedData, .)
+        pull(rec_id)
+
+      if (length(selected_rec_id) == 0) {
+        # If the selected row does not exist in the frontend table
+        # zero-out all time-differences
+        # Probably a better way to do this.
+        return(frontendData() %>%
+                 mutate(timediff = "-"))
+      }
+      selected_row <- frontendData() %>%
+        filter(rec_id == selected_rec_id)
 
       # Populate timediff col with time differences between selected row and other columns.
-      r$recParsedData %>%
-        mutate(timediff = interval(selected_row$toa, toa) %>% as.period %>% as.character()) %>%
-        pull(timediff) %>%
-        mutate(frontendData, timediff = .)
+      frontendData() %>%
+        mutate(timediff = interval(selected_row$toa, toa) %>% as.period %>% as.character())
     }
-
   })
-  output$unmatched_calls <- renderDT(isolate(frontend_data_reactive()),
+
+  formatted_data <- reactive({
+    if (!is.na(in_scoped_time_range())) {
+      time_diffed_data() %>%
+        mutate(toa = format(toa, "%H:%M:%S"))
+    } else {
+      time_diffed_data() %>%
+        mutate(toa = format(toa, "%H:%M:%S"))
+    }
+  })
+  output$unmatched_calls <- renderDT(isolate(formatted_data()),
     # Specify datatable options
     options = list(
       paging = TRUE,    ## paginate the output
@@ -153,14 +168,10 @@ server <- function(input, output, session){
 
   proxy = dataTableProxy('unmatched_calls')
 
-  observe({
-    replaceData(proxy, frontend_data_reactive(), resetPaging = FALSE, clearSelection="none")
-  })
+  observeEvent(formatted_data(), {
+    replaceData(proxy, formatted_data(), resetPaging = FALSE, clearSelection="none")
+  }, ignoreInit = TRUE)
 
-  # Observe changes in the selected DT row.
-  observeEvent(input$unmatched_calls_rows_selected, {
-
-  })
 }
 
 
