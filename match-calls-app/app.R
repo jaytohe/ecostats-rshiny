@@ -74,7 +74,7 @@ server <- function(input, output, session){
         select(toa) %>%
         summarise(min_date = min(toa), max_date=max(toa))
 
-      print(date_limits)
+
       sliderInput(
         "selected_scope_time_range",
         "Select Time Scope: ",
@@ -87,37 +87,45 @@ server <- function(input, output, session){
 
     })
 
+  ## Reactive expression that takes in toa as a parameter and checks whether it falls
+  ## within the time range specified by the filter.
   in_scoped_time_range <- reactive({
     if (is.null(input$selected_scope_time_range)) {
-      return(NA)
+      return(FALSE)
+    } else {
+    return(\(x) between(x,input$selected_scope_time_range[[1]], input$selected_scope_time_range[[2]]))
     }
-    #return(\(x) between(x,input$selected_scope_time_range[[1]], input$selected_scope_time_range[[2]]))
-    #return(\(x) x %within% interval(input$selected_scope_time_range[[1]], input$selected_scope_time_range[[2]]))
-    return(interval(input$selected_scope_time_range[[1]], input$selected_scope_time_range[[2]]))
   })
 
+  # This is the main view of the unmatched calls filtered by the time scope.
   frontendData <- reactive({
-    out <- r$recParsedData %>%
-    mutate(
-      timediff = "-",
-    ) %>%
-    select(rec_id, mic_id, toa, timediff, sex, spectrogram)
+    scoped_time_range <- in_scoped_time_range()
+    r$recParsedData %>%
+      mutate(timediff = "-") %>%
+      select(rec_id, mic_id, toa, timediff, sex, spectrogram) %>%
+      # only filter rows, if the slider has been initialized.
+      {if (!is.logical(scoped_time_range)) filter(., scoped_time_range(toa)) else .}
+    # we need to null-check because renderDT isolates the reactive frontend data on init and the observer
+    # waits for changes to update the table through the datatable proxy.
+    # Therefore, we cannot req(input$) because the table won't render at all on init.
+  })
 
-    if(!is.na(in_scoped_time_range())) {
-      out<- out %>%
-        filter(toa %within% in_scoped_time_range())
-    }
-    return(out)
-    })
 
-  time_diffed_data <- reactive({
+  ## This reactive expression calculates and stores the new time differences
+  ## based on the toa of the of the selected row and all other rows.
+  ## If no row is selected or the selected row is not visible (due to an applied time filter),
+  ## the time difference column for all rows is set to "-"
+  time_differences <- reactive({
     if (
       # If no row is selected
       is.null(input$unmatched_calls_rows_selected)
       || length(input$unmatched_calls_rows_selected) == 0
       ){
-      return(frontendData() %>%
-        mutate(timediff = "-"))
+      return(
+        frontendData() %>%
+          mutate(timediff = "-") %>%
+          pull(timediff)
+      )
     }
     else {
       # Get recording ID of selected row.
@@ -125,32 +133,38 @@ server <- function(input, output, session){
         slice(input$unmatched_calls_rows_selected) %>%
         pull(rec_id)
 
-      if (length(selected_rec_id) == 0) {
+      if (length(selected_rec_id) != 1) {
         # If the selected row does not exist in the frontend table
         # zero-out all time-differences
         # Probably a better way to do this.
         return(frontendData() %>%
-                 mutate(timediff = "-"))
+                 mutate(timediff = "-") %>% pull(timediff))
       }
       selected_row <- frontendData() %>%
-        filter(rec_id == selected_rec_id)
+        filter(rec_id == selected_rec_id) %>%
+        first()
 
       # Populate timediff col with time differences between selected row and other columns.
       frontendData() %>%
-        mutate(timediff = interval(selected_row$toa, toa) %>% as.period %>% as.character)
+        mutate(timediff = interval(selected_row$toa, toa) %>% as.period %>% as.character) %>%
+        pull(timediff)
     }
   })
 
-  formatted_data <- reactive({
-    if (!is.na(in_scoped_time_range())) {
-      time_diffed_data() %>%
-        mutate(toa = format(toa, "%H:%M:%S"))
-    } else {
-      time_diffed_data() %>%
-        mutate(toa = format(toa, "%H:%M:%S"))
-    }
+  ## Frontend data where the time of arrival is formatted to HH:MM:SS
+  formatted_toa_data <- reactive({
+    frontendData() %>%
+      mutate(toa = format(toa, "%H:%M:%S"))
   })
-  output$unmatched_calls <- renderDT(isolate(formatted_data()),
+
+  ## This is the frontend data that is modified whenever the user
+  ## selects a row and the time differences are modified.
+  on_row_select_data <- reactive({
+    formatted_toa_data() %>%
+      mutate(timediff = time_differences())
+  })
+
+  output$unmatched_calls <- renderDT(isolate(on_row_select_data()),
     # Specify datatable options
     options = list(
       paging = TRUE,    ## paginate the output
@@ -167,10 +181,11 @@ server <- function(input, output, session){
    selection = "single"
   )
 
+
   proxy = dataTableProxy('unmatched_calls')
 
-  observeEvent(formatted_data(), {
-    replaceData(proxy, formatted_data(), resetPaging = FALSE, clearSelection="none")
+  observeEvent(on_row_select_data(), {
+    replaceData(proxy, on_row_select_data(), resetPaging = FALSE, clearSelection="none")
   }, ignoreInit = TRUE)
 
 }
