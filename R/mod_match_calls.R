@@ -139,8 +139,7 @@ mod_match_calls_server <- function(id, q){
 
     ## Frontend data where the time of arrival is formatted to HH:MM:SS
     formatted_toa_data <- reactive({
-      frontendData() %>%
-        mutate(toa = format(toa, "%H:%M:%S"))
+      frontendData()
     })
 
     ## This is the frontend data that is modified whenever the user
