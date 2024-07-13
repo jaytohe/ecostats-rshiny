@@ -46,7 +46,7 @@ read_csv_vroom <- function(datapath, ...) {
 parse_rec_data <- function(recordings) {
   recordings %>%
     #which columns to select
-    select(c(recording_ID, mic_ID, GPSDatetime2, measured_bearing, measured_gender)) %>%
+    select(c(recording_ID, mic_ID, GPSDatetime2, measured_bearing, measured_gender, spectrogram)) %>%
     # rename columns to standard format
     rename(rec_id = recording_ID, mic_id = mic_ID, toa = GPSDatetime2, bearing = measured_bearing, sex = measured_gender) %>%
     # parse toa as date object

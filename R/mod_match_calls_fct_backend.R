@@ -3,8 +3,6 @@
 #' @importFrom shinyWidgets sliderTextInput
 #' @noRd
 generate_date_slider <- function(min_date, max_date) {
-
-
   # Generate all timestampts from min_date to max_date with step=second.
   time_labels <- seq(min_date, max_date, by="sec")
   # Convert time labels to HH:MM:SS strings.
@@ -20,5 +18,13 @@ generate_date_slider <- function(min_date, max_date) {
       selected = c(time_labels[[1]], time_labels[[length(time_labels)]])
     )
   )
+}
 
+#' @noRd
+checkboxColumn <- function(len) {
+  inputs <- character(len)
+  for(i in seq_len(len)) {
+    inputs[i] <- paste0("<input id=", "'checkb_" , i, "' type='checkbox'>")
+  }
+  return(inputs)
 }

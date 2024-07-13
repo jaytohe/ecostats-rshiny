@@ -11,14 +11,14 @@ app_ui <- function(request) {
     golem_add_external_resources(),
     # Your application UI logic
     fluidPage(
-      theme = bs_theme(version = 5, bootswatch="default"),
+      theme = bs_theme(version = 4),
       h1("vocomatcher"),
       mod_wizard_ui("vocostep",
                     list(
+                      mod_match_calls_ui("match_calls_1"),
                       mod_file_upload_ui("file_upload_1"),
-                      mod_date_select_ui("date_select_1"),
-                      ## To be copied in the UI
-                      mod_match_calls_ui("match_calls_1")
+                      mod_date_select_ui("date_select_1")
+                      #mod_match_calls_ui("match_calls_1")
                      ),
                     doneButton=actionButton("done", "Submit"))
     )
