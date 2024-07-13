@@ -8,13 +8,14 @@ URL: https://github.com/jaytohe/ecostats-rshiny
 BugReports: https://github.com/jaytohe/ecostats-rshiny/issues
 Imports: 
     config (>= 0.3.2),
+    DT (>= 0.33),
     golem (>= 0.4.1),
-    lubridate,
-    magrittr,
+    lubridate (>= 1.9.3),
+    magrittr (>= 2.0.3),
     shiny (>= 1.8.1.1),
-    shinyWidgets,
+    shinyWidgets (>= 0.8.6),
     tools,
-    vroom
+    vroom (>= 1.6.5)
 Suggests: 
     knitr,
     rmarkdown,

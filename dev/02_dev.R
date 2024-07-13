@@ -16,10 +16,12 @@
 ## Dependencies ----
 ## Amend DESCRIPTION with dependencies read from package code parsing
 ## install.packages('attachment') # if needed.
-usethis::use_package("vroom")
-usethis::use_package("lubridate")
-usethis::use_package("shinyWidgets")
-usethis::use_package("magrittr")
+usethis::use_package("vroom", min_version = TRUE)
+usethis::use_package("lubridate", min_version = TRUE)
+usethis::use_package("shinyWidgets", min_version = TRUE)
+usethis::use_package("magrittr", min_version = TRUE)
+usethis::use_package("DT", min_version = TRUE)
+
 
 attachment::att_amend_desc()
 
