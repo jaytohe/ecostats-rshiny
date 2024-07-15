@@ -1,8 +1,33 @@
+const dateLimits = {"from" : null, "to" : null};
+var checkboxState = {};
+
+$( document ).ready(function() {
+  Shiny.addCustomMessageHandler('showDateTimeSlider', function(e) {
+    //Find the datetime slider element and display it.
+    $("div#match_calls_1-datetime_slider_container")[0].style.display = "block";
+  });
+
+
+  Shiny.addCustomMessageHandler('filterTableByDate', function(d) {
+    //Query the DOM to find the datatable
+    var table = $("#match_calls_1-unmatched_calls #DataTables_Table_0").DataTable();
+    if (table !== undefined) {
+      // Update the date limit values.
+      dateLimits.from = d.from;
+      dateLimits.to = d.to;
+      //Redraw the table 300ms afterwards
+      setTimeout(function() {
+                table.draw(false);
+      }, 300);
+    }
+  });
+
+});
 
 function onTableLoadFinish(table) {
 
   //Attach checkboxState to the table
-  table.checkboxState = {};
+  checkboxState = {};
 
   // Prevent the first column from being selectable
   table.on('user-select', function(e, dt, type, cell, originalEvent) {
@@ -11,6 +36,8 @@ function onTableLoadFinish(table) {
     e.preventDefault();
    }
  });
+
+
 
   table.on('select', function(e, dt, type, indexes) {
       if (type === 'row') {
@@ -67,6 +94,37 @@ function onTableLoadFinish(table) {
   })
 
 
+  //Custom filtering function that checks whether min <= toa <= max
+  // This took AGES to get right!
+  // I was sending non ISO-8601 compliant date strings from the server
+  // and no error was thrown on the client!
+  // Also, this function is a relic buried deep inside old datatable forums
+  // Source: https://datatables.net/forums/discussion/7207/fn-datatableext-afnfiltering-push-what-is-this
+  // Source2: https://github.com/DataTables/Plugins/blob/master/filtering/row-based/range_dates.js
+  // DO NOT TOUCH!
+   $.fn.dataTableExt.afnFiltering.push(function(settings, data, dataIndex) {
+    if (dateLimits === undefined || dateLimits.from === null || dateLimits.to === null) {
+      return true;
+    }
+    var from = new Date(dateLimits.from);
+    var to = new Date(dateLimits.to);
+    var iterDate = new Date(data[4]); // use data from the toa column
+    return ((iterDate >= from) && (iterDate <= to)); //keep row only if it is in range.
+  })
+/*
+$.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
+  if (!sddsds) {
+    console.log("data:");
+    console.log(data);
+    console.log("data4");
+    console.log(data[4]);
+    sddsds = true;
+  }
+  return true;
+});
+*/
+
+
 }
 
   function calculateDateTimeDifference(dateTime1, dateTime2) {
@@ -102,14 +160,11 @@ function onTableLoadFinish(table) {
   }
 
 function storeCheckboxState(table) {
-  // Clear state of previous checkboxes.
-  table.checkboxState = {};
-
   // Store the state of current checkboxes
   table.rows().every(function () {
       var rowId = this.index();
       var isChecked = $(this.node()).find('input[type="checkbox"]').prop('checked');
-      table.checkboxState[rowId] = isChecked;
+      checkboxState[rowId] = isChecked;
   });
 }
 
@@ -117,7 +172,7 @@ function restoreCheckboxState(table) {
     // Restore the state of checkboxes
     table.rows().every(function () {
         var rowId = this.index();
-        var isChecked = table.checkboxState[rowId];
+        var isChecked = checkboxState[rowId];
         if (isChecked !== undefined) {
             $(this.node()).find('input[type="checkbox"]').prop('checked', isChecked);
         }
