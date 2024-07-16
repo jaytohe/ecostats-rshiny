@@ -28,7 +28,7 @@ function refreshTableImages(table) {
   console.log(Object.keys(spectroImages))
   table.column("spectrogram:name").nodes().each(function(cell, i) {
     if (typeof spectroImages[i] !== "undefined") {
-      table.cell(cell).data(`<img src=${spectroImages[i]} width="20px">`);
+      table.cell(cell).data(`<img src=${spectroImages[i]} width="50px">`);
       table.cell(cell).invalidate();
     }
   });
