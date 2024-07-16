@@ -37,7 +37,7 @@ golem::add_module(name = "date_select", with_test = TRUE)
 golem::add_module(
   name = "match_calls",
   fct = "backend",
-  js = "call_handler",
+  js = "client_datatable_logic",
   with_test = TRUE
 )
 

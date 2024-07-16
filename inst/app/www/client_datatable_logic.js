@@ -49,36 +49,6 @@ Shiny.addCustomMessageHandler('updateTableSpectrogramImages', function(arr) {
   }
 });
 
-$(document).ready(function(){
-
-  const targetNode = document.getElementById("match_calls_1-hidden_images");
-  const config = {childList: true};
-
-  // Callback function to execute when mutations are observed
-const callback = (mutationList, observer) => {
-  mutationList.forEach((mutation) => {
-    if (mutation.type === "childList") {
-      console.log("A child node has been added or removed.");
-      // Use setTimeout to defer processing until the next microtask
-      setTimeout(() => {
-        mutation.addedNodes.forEach((node) => {
-          if (node.nodeType === Node.ELEMENT_NODE && node.classList.contains("shiny-image-output")) {
-            const imgTag = node.querySelector("img");
-            if (imgTag) {
-              const srcValue = imgTag.getAttribute("src");
-              console.log("Found image source:", srcValue);
-            }
-          }
-        });
-      }, 0);
-    }
-  });
-};
-const observer = new MutationObserver(callback);
-observer.observe(targetNode, config);
-
-});
-
 function onTableLoadFinish(table) {
 
   refreshTableImages(table);
