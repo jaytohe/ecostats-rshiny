@@ -28,3 +28,28 @@ checkboxColumn <- function(len) {
   }
   return(inputs)
 }
+
+#' Function to encode images as base64
+#' @importFrom base64enc base64encode
+#' @noRd
+encode_image <- function(img_path) {
+  data_uri <- paste0("data:image/png;base64,", base64encode(img_path))
+  return(data_uri)
+}
+
+#' @noRd
+spectroImageColumn <- function(len) {
+     inputs <- character(len)
+    for(i in seq_len(len)) {
+      inputs[i] <- paste0("<image id=", "'spectro_" , i, "' height='100' src='' alt='Loading'>")
+    }
+    return(inputs)
+ }
+
+# spectroImageColumn <- function(len, ns) {
+#   inputs <- character(len)
+#   for(i in seq_len(len)) {
+#     inputs[i] <- as.character(imageOutput(ns(paste0("spectro_", i)), inline=TRUE))
+#   }
+#   return(inputs)
+# }

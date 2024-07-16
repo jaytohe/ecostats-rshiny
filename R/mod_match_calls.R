@@ -13,6 +13,7 @@ mod_match_calls_ui <- function(id) {
   ns <- NS(id)
   tagList(
     fluidRow(
+      column(12, verbatimTextOutput(ns("debug"))),
       column(12, align="center",
              div(id=ns("datetime_slider_container"),
                  style="display: none;",
@@ -48,7 +49,9 @@ mod_match_calls_ui <- function(id) {
       column(1, div()),
       # Third Column: DataTable Output
       column(5, DTOutput(ns("datatable2")))
-    )
+    ),
+    # Hidden container for dynamically loaded spectrogram images
+    div(uiOutput(ns("hidden_images"), style="visibility: visible;"))
   )
 }
 
@@ -57,6 +60,8 @@ mod_match_calls_ui <- function(id) {
 #'
 #' @importFrom DT renderDT datatable JS
 #' @importFrom lubridate format_ISO8601
+#' @importFrom purrr map
+#' @importFrom fs path path_dir
 #' @noRd
 mod_match_calls_server <- function(id, q){
   moduleServer( id, function(input, output, session){
@@ -64,16 +69,23 @@ mod_match_calls_server <- function(id, q){
 
     r <- list(recParsedData = NULL, micData = NULL)
 
+
+    absolute_path <- "/home/thinkpad/Documents/Dissertation2024/vocomatcher/data/poc_spectro/"
     rawRecData <- read.csv("/home/thinkpad/Documents/Dissertation2024/vocomatcher/data/poc_spectro/recordings.csv", tryLogical = F)
     rawMicData <- read.csv("/home/thinkpad/Documents/Dissertation2024/vocomatcher/data/poc_spectro/mic.csv")
 
     r$recParsedData <- parse_rec_data(rawRecData)
 
-    # This is the main view of the unmatched calls filtered by the time scope.
+    # This is the main view of the unmatched calls
     frontendData <- reactive({
       req(r$recParsedData)
       r$recParsedData %>%
-        mutate(toa = format_ISO8601(toa), timediff = "-", tick = checkboxColumn(nrow(r$recParsedData))) %>%
+        mutate(
+          toa = format_ISO8601(toa),
+          timediff = "-",
+          tick = checkboxColumn(nrow(r$recParsedData)),
+          spectrogram = spectroImageColumn(nrow(r$recParsedData))
+          ) %>%
         select(rec_id, tick, mic_id, toa, timediff, sex, spectrogram)
       # we need to null-check because renderDT isolates the reactive frontend data on init and the observer
       # waits for changes to update the table through the datatable proxy.
@@ -128,12 +140,13 @@ mod_match_calls_server <- function(id, q){
       session$sendCustomMessage("showDateTimeSlider", list())
     })
 
+
     ## Hack: Listen on the server-side for changes on the datetime slider
     ## On any change, notify the client via custom function such that the table gets filtered.
-    ## Ideally filter handling should happen completelt on the client side.
-    ## However 1) crosstalk's filter_slider did not work with DT (they produced an empty box).
+    ## Ideally filtering should be handely completely on the client side.
+    ## However 1) crosstalk's filter_slider did not work with DT (an empty input box was shown in the UI - no slider. Bug?)
     ## 2) Filtering the reactive frontendData() using dplyr and rendering it on the client side is not supported without
-    ## server = TRUE. We need server=FALSE to utilize the Select extension.
+    ## server = TRUE. We need server=FALSE to utilize the Select extension such that the checkbox column is not selectable.
     observeEvent(input$datetime_slider, {
       session$sendCustomMessage(
         "filterTableByDate",
@@ -143,6 +156,53 @@ mod_match_calls_server <- function(id, q){
         )
 
     })
+
+
+   #Create hidden image ids from the currently shown rows.
+#   output$hidden_images <- renderUI({
+#    req(input$unmatched_calls_rows_current)
+#    purrr::map(input$unmatched_calls_rows_current, \(p) imageOutput(ns(paste0("hidden_spectro_", p)), inline = TRUE))
+ #  })
+
+
+    observe({
+      req(input$unmatched_calls_rows_current)
+      req(frontendData())
+      encodedImages <- list()
+      idx <- 1
+      ## For each row that is visible on the current page of the table
+      for (i in input$unmatched_calls_rows_current) {
+#        local({
+          my_i <- i # Assign i to my_i so that each iteration has unique value of i
+          # Get row from backend using frontend row id.
+          backendRecID <- frontendData() %>%
+            slice(my_i) %>%
+            pull(rec_id)
+
+          outId <- paste0("hidden_spectro_", my_i)
+
+          # Filter backend datatable by record ID
+          backendRow <- filter(r$recParsedData, rec_id == backendRecID)
+
+          #Get relative path of spectrogram from backend
+          spectroRelativePath <- backendRow$spectrogram
+
+          # Get the absolute path to the image according to csv file path provided by shinyFiles
+          spectroAbsPath <- path("/home/thinkpad/Documents/Dissertation2024/vocomatcher/data/poc_spectro/recordings.csv") %>% # path(csvMetaData()$datapath) %>%
+            path_dir() %>%
+            path(spectroRelativePath) %>%
+            as.character
+
+          b64data <- encode_image(spectroAbsPath)
+
+          #my_i minus one since array indexing in javascript begins at zero (like any other normal language!)
+          encodedImages[[idx]] <- list(rowId = my_i-1, src=b64data)
+          idx = idx + 1;
+      }
+      session$sendCustomMessage("updateTableSpectrogramImages", encodedImages)
+    })
+
+
 
 #    proxy = dataTableProxy('unmatched_calls')
 

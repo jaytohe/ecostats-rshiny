@@ -1,34 +1,87 @@
 const dateLimits = {"from" : null, "to" : null};
 var checkboxState = {};
+var spectroImages = {};
 
-$( document ).ready(function() {
-  Shiny.addCustomMessageHandler('showDateTimeSlider', function(e) {
-    //Find the datetime slider element and display it.
-    $("div#match_calls_1-datetime_slider_container")[0].style.display = "block";
-  });
+Shiny.addCustomMessageHandler('showDateTimeSlider', function(e) {
+  //Find the datetime slider element and display it.
+  $("div#match_calls_1-datetime_slider_container")[0].style.display = "block";
+});
 
 
-  Shiny.addCustomMessageHandler('filterTableByDate', function(d) {
-    //Query the DOM to find the datatable
-    var table = $("#match_calls_1-unmatched_calls #DataTables_Table_0").DataTable();
-    if (table !== undefined) {
-      // Update the date limit values.
-      dateLimits.from = d.from;
-      dateLimits.to = d.to;
-      //Redraw the table 300ms afterwards
-      setTimeout(function() {
-                table.draw(false);
-      }, 300);
+Shiny.addCustomMessageHandler('filterTableByDate', function(d) {
+  //Query the DOM to find the datatable
+  // Check if Datatable has been initialized
+  var table = ($.fn.DataTable) ? $("#match_calls_1-unmatched_calls #DataTables_Table_0").DataTable() : null;
+  if (table !== null) {
+    // Update the date limit values.
+    dateLimits.from = d.from;
+    dateLimits.to = d.to;
+    //Redraw the table 300ms afterwards
+    setTimeout(function() {
+              table.draw(false);
+    }, 300);
+  }
+});
+
+function refreshTableImages(table) {
+  console.log("REFRESHING IMAGES");
+  console.log(Object.keys(spectroImages))
+  table.column("spectrogram:name").nodes().each(function(cell, i) {
+    if (typeof spectroImages[i] !== "undefined") {
+      table.cell(cell).data(`<img src=${spectroImages[i]} width="20px">`);
+      table.cell(cell).invalidate();
     }
   });
+  table.draw(false);
+}
+
+function hasTableLoaded() {
+  return ($.fn.DataTable) && $.fn.DataTable.isDataTable("#match_calls_1-unmatched_calls #DataTables_Table_0");
+}
+
+Shiny.addCustomMessageHandler('updateTableSpectrogramImages', function(arr) {
+  for (const imageObj of arr) {
+    //Update the state of spectrogram images
+    spectroImages[imageObj.rowId] = imageObj.src;
+  }
+  if(hasTableLoaded()) {
+     refreshTableImages($("#match_calls_1-unmatched_calls #DataTables_Table_0").DataTable());
+  }
+});
+
+$(document).ready(function(){
+
+  const targetNode = document.getElementById("match_calls_1-hidden_images");
+  const config = {childList: true};
+
+  // Callback function to execute when mutations are observed
+const callback = (mutationList, observer) => {
+  mutationList.forEach((mutation) => {
+    if (mutation.type === "childList") {
+      console.log("A child node has been added or removed.");
+      // Use setTimeout to defer processing until the next microtask
+      setTimeout(() => {
+        mutation.addedNodes.forEach((node) => {
+          if (node.nodeType === Node.ELEMENT_NODE && node.classList.contains("shiny-image-output")) {
+            const imgTag = node.querySelector("img");
+            if (imgTag) {
+              const srcValue = imgTag.getAttribute("src");
+              console.log("Found image source:", srcValue);
+            }
+          }
+        });
+      }, 0);
+    }
+  });
+};
+const observer = new MutationObserver(callback);
+observer.observe(targetNode, config);
 
 });
 
 function onTableLoadFinish(table) {
 
-  //Attach checkboxState to the table
-  checkboxState = {};
-
+  refreshTableImages(table);
   // Prevent the first column from being selectable
   table.on('user-select', function(e, dt, type, cell, originalEvent) {
    console.log('triggered');
@@ -36,9 +89,6 @@ function onTableLoadFinish(table) {
     e.preventDefault();
    }
  });
-
-
-
   table.on('select', function(e, dt, type, indexes) {
       if (type === 'row') {
 
