@@ -13,7 +13,7 @@ mod_match_calls_ui <- function(id) {
   ns <- NS(id)
   tagList(
     fluidRow(
-      column(12, verbatimTextOutput(ns("debug"))),
+#      column(12, verbatimTextOutput(ns("debug"))), # DEBUG
       column(12, align="center",
              div(id=ns("datetime_slider_container"),
                  style="display: none;",
@@ -49,9 +49,7 @@ mod_match_calls_ui <- function(id) {
       column(1, div()),
       # Third Column: DataTable Output
       column(5, DTOutput(ns("datatable2")))
-    ),
-    # Hidden container for dynamically loaded spectrogram images
-    div(uiOutput(ns("hidden_images"), style="visibility: visible;"))
+    )
   )
 }
 
@@ -157,29 +155,19 @@ mod_match_calls_server <- function(id, q){
 
     })
 
-
-   #Create hidden image ids from the currently shown rows.
-#   output$hidden_images <- renderUI({
-#    req(input$unmatched_calls_rows_current)
-#    purrr::map(input$unmatched_calls_rows_current, \(p) imageOutput(ns(paste0("hidden_spectro_", p)), inline = TRUE))
- #  })
-
-
     observe({
       req(input$unmatched_calls_rows_current)
       req(frontendData())
+
+      # array of base64 images and the frontend row index they correspond to
       encodedImages <- list()
       idx <- 1
       ## For each row that is visible on the current page of the table
       for (i in input$unmatched_calls_rows_current) {
-#        local({
-          my_i <- i # Assign i to my_i so that each iteration has unique value of i
           # Get row from backend using frontend row id.
           backendRecID <- frontendData() %>%
-            slice(my_i) %>%
+            slice(i) %>%
             pull(rec_id)
-
-          outId <- paste0("hidden_spectro_", my_i)
 
           # Filter backend datatable by record ID
           backendRow <- filter(r$recParsedData, rec_id == backendRecID)
@@ -193,12 +181,15 @@ mod_match_calls_server <- function(id, q){
             path(spectroRelativePath) %>%
             as.character
 
+          ## Read the input image file and base64 encode it
           b64data <- encode_image(spectroAbsPath)
 
-          #my_i minus one since array indexing in javascript begins at zero (like any other normal language!)
-          encodedImages[[idx]] <- list(rowId = my_i-1, src=b64data)
+          #i minus one since array indexing in javascript begins at zero (like any other normal language!)
+          encodedImages[[idx]] <- list(rowId = i-1, src=b64data)
+
           idx = idx + 1;
       }
+      # Send JSON array to client of format [ {rowId: <num>, src: <base64string>} ]
       session$sendCustomMessage("updateTableSpectrogramImages", encodedImages)
     })
 
