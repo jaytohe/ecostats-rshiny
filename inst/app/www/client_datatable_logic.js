@@ -2,6 +2,10 @@ const dateLimits = {"from" : null, "to" : null};
 var checkboxState = {};
 var spectroImages = {};
 
+function hasTableLoaded() {
+  return ($.fn.DataTable) && $.fn.DataTable.isDataTable("#match_calls_1-unmatched_calls #DataTables_Table_0");
+}
+
 Shiny.addCustomMessageHandler('showDateTimeSlider', function(e) {
   //Find the datetime slider element and display it.
   $("div#match_calls_1-datetime_slider_container")[0].style.display = "block";
@@ -23,38 +27,61 @@ Shiny.addCustomMessageHandler('filterTableByDate', function(d) {
   }
 });
 
-function refreshTableImages(table) {
-  console.log("REFRESHING IMAGES");
-  console.log(Object.keys(spectroImages))
-  table.column("spectrogram:name").nodes().each(function(cell, i) {
-    if (typeof spectroImages[i] !== "undefined") {
-      table.cell(cell).data(`<img src=${spectroImages[i]} width="50px">`);
-      table.cell(cell).invalidate();
-    }
-  });
-  table.draw(false);
-}
-
-function hasTableLoaded() {
-  return ($.fn.DataTable) && $.fn.DataTable.isDataTable("#match_calls_1-unmatched_calls #DataTables_Table_0");
-}
-
 Shiny.addCustomMessageHandler('updateTableSpectrogramImages', function(arr) {
   for (const imageObj of arr) {
     //Update the state of spectrogram images
     spectroImages[imageObj.rowId] = imageObj.src;
   }
-  if(hasTableLoaded()) {
-     refreshTableImages($("#match_calls_1-unmatched_calls #DataTables_Table_0").DataTable());
+  // Update the images if the table has loaded
+  if (hasTableLoaded()) {
+    refreshTableImages($("#match_calls_1-unmatched_calls #DataTables_Table_0").DataTable());
   }
 });
 
-function onTableLoadFinish(table) {
+function refreshTableImages(table) {
+  console.log("REFRESHING IMAGES");
+  console.log(Object.keys(spectroImages))
+  let invalidated = false;
+  table.column("spectrogram:name").nodes().each(function(cell, i) {
+    if (typeof spectroImages[i] !== "undefined") {
+      table.cell(cell).data(`<img src=${spectroImages[i]} width="50px">`);
+      table.cell(cell).invalidate();
+      invalidated = true;
+    }
+  });
+  if (invalidated) {
+    table.draw(false);
+  }
+}
 
+function registerCheckboxListeners(table) {
+  //table.column("tick:name").nodes().to$().find("input").on("click", function() {console.log("clicked: "+ $(this).attr("id"));}); // Individual listeners for every checkboxes
+
+  //Delegated click event handler on the datatable parent
+  table.on('click', 'input[type="checkbox"]', function() {
+    console.log("clicked: " + $(this).attr("id"));
+    const checkId = $(this).attr("id");
+    const isChecked = $(this).prop("checked");
+    let rowId = checkId.split("_")[1]
+    rowId = parseInt(rowId)-1;
+    //Store state
+    checkboxState[rowId] = isChecked;
+  });
+
+}
+
+
+function onTableLoadFinish(table) {
+  // Copy images to DOM from internal state
   refreshTableImages(table);
+
+  //Register event listers for all checkboxes to keep track of checked state
+   registerCheckboxListeners(table);
+
+
   // Prevent the first column from being selectable
   table.on('user-select', function(e, dt, type, cell, originalEvent) {
-   console.log('triggered');
+    console.log("==USER-SELECT EVENT==")
    if (cell.index().column === 2) {
     e.preventDefault();
    }
@@ -63,7 +90,7 @@ function onTableLoadFinish(table) {
       if (type === 'row') {
 
           // Backup all checkboxes
-          storeCheckboxState(table);
+          //storeCheckboxState(table);
 
           const selectedData = table.rows(indexes).data()[0];
           const selectedToa = selectedData[table.column("toa:name").index()];
@@ -93,7 +120,7 @@ function onTableLoadFinish(table) {
   table.on('deselect',  function(e, dt, type, indexes) {
 
     // Backup all checkboxes
-    storeCheckboxState(table);
+    //storeCheckboxState(table);
 
     // Loop through all rows
     table.rows().every(function (rowIdx, tableLoop, rowLoop) {
@@ -131,19 +158,6 @@ function onTableLoadFinish(table) {
     var iterDate = new Date(data[4]); // use data from the toa column
     return ((iterDate >= from) && (iterDate <= to)); //keep row only if it is in range.
   })
-/*
-$.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
-  if (!sddsds) {
-    console.log("data:");
-    console.log(data);
-    console.log("data4");
-    console.log(data[4]);
-    sddsds = true;
-  }
-  return true;
-});
-*/
-
 
 }
 
