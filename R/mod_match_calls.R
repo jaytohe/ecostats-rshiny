@@ -16,7 +16,7 @@ mod_match_calls_ui <- function(id) {
 #      column(12, verbatimTextOutput(ns("debug"))), # DEBUG
       column(12, align="center",
              div(id=ns("datetime_slider_container"),
-                 style="display: none;",
+                 style="visibility: hidden;",
                  sliderInput(
                    ns("datetime_slider"),
                    "Filter time: ",
@@ -30,7 +30,8 @@ mod_match_calls_ui <- function(id) {
       )
     ),
     fluidRow(
-      column(4, align="center", actionButton(ns("show_spectrograms2"), "Show spectrograms", class = "btn btn-info")),
+      #actionButton(ns("show_spectrograms2"), "Show spectrograms", class = "btn btn-info")
+      column(4, align="center", tags$button("Show spectrograms" ,id="show_spectrograms", class="btn btn-info")),
       column(4, align="center", actionButton(ns("create_group2"), "Create new call group", class = "btn btn-primary")),
       column(4, align="center", div(class="btn-group",
                                     actionButton(ns("add_to_group"), "Add", class = "btn btn-secondary btn-spacing"),

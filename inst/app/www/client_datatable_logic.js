@@ -8,7 +8,7 @@ function hasTableLoaded() {
 
 Shiny.addCustomMessageHandler('showDateTimeSlider', function(e) {
   //Find the datetime slider element and display it.
-  $("div#match_calls_1-datetime_slider_container")[0].style.display = "block";
+  $("div#match_calls_1-datetime_slider_container")[0].style.visibility = "visible";
 });
 
 
@@ -20,10 +20,11 @@ Shiny.addCustomMessageHandler('filterTableByDate', function(d) {
     // Update the date limit values.
     dateLimits.from = d.from;
     dateLimits.to = d.to;
-    //Redraw the table 300ms afterwards
-    setTimeout(function() {
-              table.draw(false);
-    }, 300);
+    //Redraw the table;
+    //The filtering fuction is called first internally before drawing.
+    //setTimeout(function() {
+    table.draw(false);
+   // }, 300);
   }
 });
 
@@ -69,7 +70,6 @@ function registerCheckboxListeners(table) {
   });
 
 }
-
 
 function onTableLoadFinish(table) {
   // Copy images to DOM from internal state
