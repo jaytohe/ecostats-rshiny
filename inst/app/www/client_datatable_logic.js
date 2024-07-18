@@ -65,8 +65,19 @@ function registerCheckboxListeners(table) {
     const isChecked = $(this).prop("checked");
     let rowId = checkId.split("_")[1]
     rowId = parseInt(rowId)-1;
-    //Store state
-    checkboxState[rowId] = isChecked;
+    if (isChecked) {
+      //Store state
+      checkboxState[rowId] = true;
+    } else {
+      // Only keep checked rows in object.
+      delete checkboxState[rowId];
+    }
+    console.log(checkboxState);
+
+    //Notify the server which rows have been selected
+    // +1 since R uses 1-based indexing
+    const checkedRows = Object.keys(checkboxState).map(row => parseInt(row)+1);
+    Shiny.setInputValue("match_calls_1-checked_rows", checkedRows);
   });
 
 }
