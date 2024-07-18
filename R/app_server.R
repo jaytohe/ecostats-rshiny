@@ -9,7 +9,8 @@ app_server <- function(input, output, session) {
   r <- reactiveValues(
     micData = NULL,
     recData = NULL,
-    recParsedData = NULL
+    recParsedData = NULL,
+    arrows_state = NULL
   )
   mod_file_upload_server("file_upload_1", r)
   mod_date_select_server("date_select_1", r)

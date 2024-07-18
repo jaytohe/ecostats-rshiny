@@ -7,9 +7,14 @@ License: MIT + file LICENSE
 URL: https://github.com/jaytohe/ecostats-rshiny
 BugReports: https://github.com/jaytohe/ecostats-rshiny/issues
 Imports: 
+    bslib (>= 0.7.0),
     config (>= 0.3.2),
     DT (>= 0.33),
+    geosphere (>= 1.5.18),
     golem (>= 0.4.1),
+    leaflet (>= 2.2.2),
+    leaflet.extras (>= 2.0.0),
+    leaflet.extras2 (>= 1.2.2),
     lubridate (>= 1.9.3),
     magrittr (>= 2.0.3),
     shiny (>= 1.8.1.1),

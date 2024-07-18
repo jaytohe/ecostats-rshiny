@@ -55,6 +55,27 @@ parse_rec_data <- function(recordings) {
     arrange(toa)
 }
 
+#' Get backend row by frontend row id
+#'
+#' @description
+#' This function returns the row from recParsedData corresponding to the one in frontendData.
+#'
+#'
+#' @param frontendData The tibble the client sees on the frontend
+#' @param backendData The tibble the server holds.
+#' @returns the backend rows with the same rec_ids as the frontend rows.
+#' @importFrom dplyr slice pull filter
+#' @noRd
+get_backend_rows_by_frontend_id <- function(frontendData, backendData, frontendRowIDs) {
+  rec_ids <- frontendData %>%
+    slice(frontendRowIDs) %>%
+    pull(rec_id)
+
+  out <- backendData %>%
+    filter(rec_id %in% rec_ids)
+  return(out)
+}
+
 show_alert <- function(msg, title) {
   golem::invoke_js("erroralert", list(title=title, msg=msg))
 }

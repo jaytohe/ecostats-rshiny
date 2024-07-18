@@ -13,7 +13,7 @@ mod_match_calls_ui <- function(id) {
   ns <- NS(id)
   tagList(
     fluidRow(
-#      column(12, verbatimTextOutput(ns("debug"))), # DEBUG
+      column(12, verbatimTextOutput(ns("debug"))), # DEBUG
       column(12, align="center",
              div(id=ns("datetime_slider_container"),
                  style="visibility: hidden;",
@@ -48,8 +48,8 @@ mod_match_calls_ui <- function(id) {
              )
       ),
       column(1, div()),
-      # Third Column: DataTable Output
-      column(5, DTOutput(ns("datatable2")))
+      # Third Column: leaflet map and matched calls
+      column(5, fluidRow(mod_bearings_vis_ui(ns("bearings_vis_1"))))
     )
   )
 }
@@ -73,7 +73,9 @@ mod_match_calls_server <- function(id, q){
     rawRecData <- read.csv("/home/thinkpad/Documents/Dissertation2024/vocomatcher/data/poc_spectro/recordings.csv", tryLogical = F)
     rawMicData <- read.csv("/home/thinkpad/Documents/Dissertation2024/vocomatcher/data/poc_spectro/mic.csv")
 
+    ##Simulated reactive values for now.
     r$recParsedData <- parse_rec_data(rawRecData)
+    r$micData <- rawMicData
 
     # This is the main view of the unmatched calls
     frontendData <- reactive({
@@ -90,6 +92,15 @@ mod_match_calls_server <- function(id, q){
       # waits for changes to update the table through the datatable proxy.
       # Therefore, we cannot req(input$) because the table won't render at all on init.
     })
+
+
+    ### TODO: Change it when we integrate the match_calls module with other all other modules
+    observeEvent(input$checked_rows, q$checked_rows <- input$checked_rows, ignoreNULL = FALSE)
+    observe({q$frontendData <- frontendData()})
+    q$recParsedData <- r$recParsedData
+    q$micData <- r$micData
+
+    mod_bearings_vis_server("bearings_vis_1", q)
 
     output$unmatched_calls <- renderDT({
       datatable(

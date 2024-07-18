@@ -24,7 +24,7 @@ mod_wizard_ui <- function(id, pages, doneButton = NULL) {
   wrapped$id <- NS(id, "wizard")
   wrapped$type <- "hidden"
   v <- do.call("tabsetPanel", wrapped)
-  golem::print_dev(v)
+  #golem::print_dev(v)
   return(v)
 }
 
