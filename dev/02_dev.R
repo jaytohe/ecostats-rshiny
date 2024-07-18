@@ -21,7 +21,11 @@ usethis::use_package("lubridate", min_version = TRUE)
 usethis::use_package("shinyWidgets", min_version = TRUE)
 usethis::use_package("magrittr", min_version = TRUE)
 usethis::use_package("DT", min_version = TRUE)
-
+usethis::use_package("leaflet", min_version = TRUE)
+usethis::use_package("leaflet.extras", min_version = TRUE)
+usethis::use_package("leaflet.extras2", min_version = TRUE)
+usethis::use_package("geosphere", min_version = TRUE)
+usethis::use_package("bslib", min_version = TRUE)
 
 attachment::att_amend_desc()
 
@@ -39,6 +43,10 @@ golem::add_module(
   fct = "backend",
   js = "client_datatable_logic",
   with_test = TRUE
+)
+
+golem::add_module(
+  name = "bearings_vis"
 )
 
 ## Add helper functions ----
