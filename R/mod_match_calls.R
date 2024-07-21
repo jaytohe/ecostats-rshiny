@@ -49,7 +49,12 @@ mod_match_calls_ui <- function(id) {
       ),
       column(1, div()),
       # Third Column: leaflet map and matched calls
-      column(5, fluidRow(mod_bearings_vis_ui(ns("bearings_vis_1"))))
+      column(5,
+             fluidRow(mod_bearings_vis_ui(ns("bearings_vis_1"))),
+             fluidRow(hr()),
+             fluidRow(tags$h3("Grouped Calls: ", style="text-align: center;")),
+             fluidRow(uiOutput(ns("matched_calls")))
+      )
     )
   )
 }
@@ -167,6 +172,7 @@ mod_match_calls_server <- function(id, q){
 
     })
 
+    ## Observe changes to the row ids shown on the current page
     observe({
       req(input$unmatched_calls_rows_current)
       req(frontendData())
@@ -204,6 +210,97 @@ mod_match_calls_server <- function(id, q){
       # Send JSON array to client of format [ {rowId: <num>, src: <base64string>} ]
       session$sendCustomMessage("updateTableSpectrogramImages", encodedImages)
     })
+
+
+    # On "Create new call group" button click
+    # Create a call group of the checked calls and add it to the reactive call_groups list
+    # If successful, hide the checked calls from the frontend table.
+    observeEvent(input$create_group2, {
+      req(input$checked_rows) # Only run if there are checked rows
+      req(frontendData())
+
+      ## Get backend rows
+      backend_rows <- get_backend_rows_by_frontend_id(frontendData(), r$recParsedData, input$checked_rows)
+
+      ## Get rec id of first recording
+      ## Given that record ids are unique, we will use this as the group id.
+      group_id <- backend_rows$rec_id[[1]]
+      group_toa <- lubridate::format_ISO8601(backend_rows$toa[[1]])
+
+
+      call_group <- list(
+        frontend_row_ids = input$checked_rows,
+        backend_rows = backend_rows,
+        group_id = group_id,
+        group_toa = group_toa
+      )
+
+      ## Append call group to list of call groups
+      if (is.null(q$call_groups)) {
+        q$call_groups <- list()
+        q$call_groups[[1]] <- call_group
+      } else {
+        golem::print_dev("appended")
+        q$call_groups[[length(q$call_groups)+1]] <- call_group
+      }
+
+    })
+
+
+  #' Generate a table row for each of the calls in a call group.
+  #' The table row contains:
+  #' - frontend row id
+  #' - mic id
+  #' - toa
+  #' - sex
+  #' and a remove button, to remove a given call from a group.
+  generate_rows <- function(call_group) {
+    rows <- list()
+    golem::print_dev(nrow(call_group$backend_rows))
+    for (i in seq_len(nrow(call_group$backend_rows))) { # For each backend row
+      rows[[i]] <- tags$tr(
+        tags$td(tags$button(type="button", class="btn-close", `aria-label`="Remove", style="padding-top: 0.5em; padding-bottom: 0em;")),
+        tags$th(scope="row", call_group$frontend_row_ids[[i]]),
+        tags$td(call_group$backend_rows$mic_id[[i]]),
+        tags$td(call_group$backend_rows$toa[[i]]),
+        tags$td(call_group$backend_rows$sex[[i]])
+      )
+    }
+    golem::print_dev(rows)
+    return(rows)
+  }
+
+  #' Each time the call_groups list changes
+  #' Re-render the accordion containing tables of grouped calls
+    observeEvent(q$call_groups, {
+      panels <- list()
+      for (i in seq_along(q$call_groups)) {
+        call_group <- q$call_groups[[i]]
+        panels[[i]] <- bslib::accordion_panel(
+          paste0("Call Group #", i, " | ", "TOA : ", call_group$group_toa),
+          tags$table(
+            class="table table-bordered table-hover",
+            tags$thead(tags$tr(
+              tags$th(scope="col", ""),
+              tags$th(scope="col", "row id"),
+              tags$th(scope="col", "mic id"),
+              tags$th(scope="col", "toa"),
+              tags$th(scope="col", "sex")
+            )
+            ),
+            tags$tbody(!!!generate_rows(call_group))
+        )
+        )
+      }
+
+      # Render the accordion and make sure it is centered inside the fluidRow
+      out <- bslib::accordion(!!!panels, style="max-width: fit-content; margin-left: auto; margin-right: auto;")
+      golem::print_dev(out)
+      output$matched_calls <- renderUI({out})
+    })
+
+
+
 
 
 
