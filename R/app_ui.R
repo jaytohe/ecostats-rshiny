@@ -11,7 +11,7 @@ app_ui <- function(request) {
     golem_add_external_resources(),
     # Your application UI logic
     fluidPage(
-      theme = bs_theme(version = 4),
+      theme = bs_theme(version = 5),
       h1("vocomatcher"),
       mod_wizard_ui("vocostep",
                     list(

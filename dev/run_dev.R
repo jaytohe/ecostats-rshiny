@@ -14,5 +14,5 @@ golem::detach_all_attached()
 # Document and reload your package
 golem::document_and_reload()
 
-# Run the application
-vocomatcher::run_app()
+# Run the application on the web browser
+vocomatcher::run_app(options = list(launch.browser = TRUE))
