@@ -32,6 +32,13 @@ destpoint_v_dplyr <- function(df, d) {
            arrow_lng = arrow_df$arrow_lng)
 }
 
+arrow_color <- function(sex) {
+  if (is.null(sex) || is.na(sex)) "red"
+  else if (sex == "F") "yellow"
+  else if (sex == "M") "cyan"
+  else "red"
+}
+
 
 #' bearings_vis Server Functions
 #'
@@ -85,7 +92,7 @@ mod_bearings_vis_server <- function(id, r){
       radius = 500 # meters. todo: calculate the optimum radius given mic coordinates
       recordings_bearing_info <- backend_rows %>%
         inner_join(r$micData, by="mic_id") %>%
-        select(rec_id, mic_id, bearing, lat, lng) %>%
+        select(rec_id, mic_id, bearing, sex, lat, lng) %>%
         destpoint_v_dplyr(d=radius)
 
       r$arrows_state <- cbind(recordings_bearing_info, row_ids)
@@ -99,6 +106,7 @@ mod_bearings_vis_server <- function(id, r){
       proxy %>%
         clearGroup("all")
 
+
       # prevents plotting arrows on declaration
       if (!is.null(r$arrows_state)) {
         for (i in 1:dim(r$arrows_state)[1]) { # for each row in arrow state df
@@ -109,7 +117,9 @@ mod_bearings_vis_server <- function(id, r){
               group = "all",
               layerId = paste0("arrow_", i),
               label = paste0("Row ID: ", r$arrows_state[i, "row_id"]),
-              color = "red", opacity = 50,
+              # Color the arrow according to the sex saved in the call; If no sex saved, resort to red.
+              color = arrow_color(r$arrows_state[i,"sex"]),
+              opacity = 50,
               options = arrowheadOptions(yawn = 40, fill = FALSE)
             )
         }
