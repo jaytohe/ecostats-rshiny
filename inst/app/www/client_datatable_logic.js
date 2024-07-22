@@ -224,3 +224,15 @@ function restoreCheckboxState(table) {
     });
 }
 
+/*
+* This function is called whenever the X button is pressed, to remove a call from a group.
+* We extract row and group ids from the button id and
+* notify the shiny server which calls to remove.
+*/
+function onRemoveCallFromGroupBtnClick(btn) {
+  let ids = btn.id.split("_");
+  //ids = [<row_id>, <group_id>]
+  ids = [ids[2], ids[4]].map(id => parseInt(id));
+  console.log(`Removing row ${ids[0]} from group ${ids[1]}`);
+  Shiny.setInputValue("match_calls_1-remove_call_from_group", ids);
+}

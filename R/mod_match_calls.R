@@ -259,14 +259,22 @@ mod_match_calls_server <- function(id, q){
     golem::print_dev(nrow(call_group$backend_rows))
     for (i in seq_len(nrow(call_group$backend_rows))) { # For each backend row
       rows[[i]] <- tags$tr(
-        tags$td(tags$button(type="button", class="btn-close", `aria-label`="Remove", style="padding-top: 0.5em; padding-bottom: 0em;")),
+        tags$td(tags$button(
+          type="button",
+          # id: <rm_call_<row_id>_group_<group_id>
+          id=paste0("rm_call_", call_group$frontend_row_ids[[i]], "_group_", call_group$group_id),
+          class="btn-close",
+          `aria-label`="Remove",
+          style="padding-top: 0.5em; padding-bottom: 0em;",
+          onclick="onRemoveCallFromGroupBtnClick(this)"
+          )),
         tags$th(scope="row", call_group$frontend_row_ids[[i]]),
         tags$td(call_group$backend_rows$mic_id[[i]]),
         tags$td(call_group$backend_rows$toa[[i]]),
         tags$td(call_group$backend_rows$sex[[i]])
       )
     }
-    golem::print_dev(rows)
+    #golem::print_dev(rows)
     return(rows)
   }
 
@@ -295,8 +303,38 @@ mod_match_calls_server <- function(id, q){
 
       # Render the accordion and make sure it is centered inside the fluidRow
       out <- bslib::accordion(!!!panels, style="max-width: fit-content; margin-left: auto; margin-right: auto;")
-      golem::print_dev(out)
+      #golem::print_dev(out)
       output$matched_calls <- renderUI({out})
+    })
+
+
+    # Remove call from group logic
+    observeEvent(input$remove_call_from_group, {
+      row_id = input$remove_call_from_group[[1]]
+      group_id = input$remove_call_from_group[[2]]
+
+      # Find the call group via linear search
+      for(i in seq_along(q$call_groups)) {
+
+        if ( q$call_groups[[i]]$group_id == group_id) {
+          # Find index of the row_id in the frontend_row_ids vector
+          j <- which(q$call_groups[[i]]$frontend_row_ids == row_id)
+          # If found
+          if (length(j) != 0) {
+            #Remove it from frontend row ids
+            q$call_groups[[i]]$frontend_row_ids <-  q$call_groups[[i]]$frontend_row_ids[-j]
+            q$call_groups[[i]]$backend_rows <-  q$call_groups[[i]]$backend_rows %>% slice(-j)
+          }
+          # If all calls removed
+          if (length(q$call_groups[[i]]$frontend_row_ids) == 0) {
+            golem::print_dev(paste("Removing entire row", i))
+            # Remove the entire call group
+            q$call_groups <- q$call_groups[-i]
+          }
+          break
+        }
+      }
+
     })
 
 
