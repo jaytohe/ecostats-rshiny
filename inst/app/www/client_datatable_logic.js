@@ -1,6 +1,7 @@
 const dateLimits = {"from" : null, "to" : null};
 var checkboxState = {};
 var spectroImages = {};
+var filteredRows = {};
 
 function hasTableLoaded() {
   return ($.fn.DataTable) && $.fn.DataTable.isDataTable("#match_calls_1-unmatched_calls #DataTables_Table_0");
@@ -10,6 +11,33 @@ Shiny.addCustomMessageHandler('showDateTimeSlider', function(e) {
   //Find the datetime slider element and display it.
   $("div#match_calls_1-datetime_slider_container")[0].style.visibility = "visible";
 });
+
+
+Shiny.addCustomMessageHandler('hideTableRows', function(r) {
+  const rows = (typeof r == "number") ? [r] : r;
+  console.log(`rows to hide: ${rows}`);
+  rows.forEach(row => filteredRows[row] = true);
+  var table = ($.fn.DataTable) ? $("#match_calls_1-unmatched_calls #DataTables_Table_0").DataTable() : null;
+  // Uncheck all checkboxes
+  table.rows().every(function () {
+      var rowId = this.index();
+      var checkbox = $(this.node()).find('input[type="checkbox"]').prop('checked', false);
+  });
+  //Empty the checkboxState
+  checkboxState = {};
+  // Notify the server that there are no checked rows
+   Shiny.setInputValue("match_calls_1-checked_rows", []);
+   // Re-draw the table to apply the filter.
+  table.draw(false);
+});
+
+Shiny.addCustomMessageHandler('showTableRows', function(r) {
+  const rows = (typeof r == "number") ? [r] : r;
+  rows.forEach(row => delete filteredRows[row]);
+  var table = ($.fn.DataTable) ? $("#match_calls_1-unmatched_calls #DataTables_Table_0").DataTable() : null;
+  table.draw(false);
+});
+
 
 
 Shiny.addCustomMessageHandler('filterTableByDate', function(d) {
@@ -161,8 +189,11 @@ function onTableLoadFinish(table) {
   // Source2: https://github.com/DataTables/Plugins/blob/master/filtering/row-based/range_dates.js
   // DO NOT TOUCH!
    $.fn.dataTableExt.afnFiltering.push(function(settings, data, dataIndex) {
-    if (dateLimits === undefined || dateLimits.from === null || dateLimits.to === null) {
+    if (dateLimits === undefined || filteredRows === undefined || dateLimits.from === null || dateLimits.to === null) {
       return true;
+    }
+    if (dataIndex in filteredRows) {
+      return false;
     }
     var from = new Date(dateLimits.from);
     var to = new Date(dateLimits.to);

@@ -282,8 +282,10 @@ mod_match_calls_server <- function(id, q){
   #' Re-render the accordion containing tables of grouped calls
     observeEvent(q$call_groups, {
       panels <- list()
+      rows_to_hide <- c()
       for (i in seq_along(q$call_groups)) {
         call_group <- q$call_groups[[i]]
+        rows_to_hide <- c(rows_to_hide, call_group$frontend_row_ids)
         panels[[i]] <- bslib::accordion_panel(
           paste0("Call Group #", i, " | ", "TOA : ", call_group$group_toa),
           tags$table(
@@ -305,6 +307,11 @@ mod_match_calls_server <- function(id, q){
       out <- bslib::accordion(!!!panels, style="max-width: fit-content; margin-left: auto; margin-right: auto;")
       #golem::print_dev(out)
       output$matched_calls <- renderUI({out})
+
+      # Minus one all rows since javascript/datatable starts index at 0.
+      rows_to_hide <- purrr::map(rows_to_hide, \(row_num) row_num-1)
+      ## Hide the rows which are in call groups from the main table
+      session$sendCustomMessage("hideTableRows", rows_to_hide)
     })
 
 
@@ -312,7 +319,7 @@ mod_match_calls_server <- function(id, q){
     observeEvent(input$remove_call_from_group, {
       row_id = input$remove_call_from_group$rows[[1]]
       group_id = input$remove_call_from_group$rows[[2]]
-
+      removed = FALSE
       # Find the call group via linear search
       for(i in seq_along(q$call_groups)) {
 
@@ -324,6 +331,7 @@ mod_match_calls_server <- function(id, q){
             #Remove it from frontend row ids
             q$call_groups[[i]]$frontend_row_ids <-  q$call_groups[[i]]$frontend_row_ids[-j]
             q$call_groups[[i]]$backend_rows <-  q$call_groups[[i]]$backend_rows %>% slice(-j)
+            removed = TRUE
           }
           # If all calls removed
           if (length(q$call_groups[[i]]$frontend_row_ids) == 0) {
@@ -333,6 +341,10 @@ mod_match_calls_server <- function(id, q){
           }
           break
         }
+      }
+
+      if (removed) { # If the removal was successful, unhide the row from the main table.
+        session$sendCustomMessage("showTableRows", row_id-1)
       }
 
     })
