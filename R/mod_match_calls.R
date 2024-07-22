@@ -236,7 +236,7 @@ mod_match_calls_server <- function(id, q){
       )
 
       ## Append call group to list of call groups
-      if (is.null(q$call_groups)) {
+      if (is.null(q$call_groups) || (length(q$call_groups) == 0)) {
         q$call_groups <- list()
         q$call_groups[[1]] <- call_group
       } else {
@@ -310,8 +310,8 @@ mod_match_calls_server <- function(id, q){
 
     # Remove call from group logic
     observeEvent(input$remove_call_from_group, {
-      row_id = input$remove_call_from_group[[1]]
-      group_id = input$remove_call_from_group[[2]]
+      row_id = input$remove_call_from_group$rows[[1]]
+      group_id = input$remove_call_from_group$rows[[2]]
 
       # Find the call group via linear search
       for(i in seq_along(q$call_groups)) {

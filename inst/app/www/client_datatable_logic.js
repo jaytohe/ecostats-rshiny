@@ -234,5 +234,6 @@ function onRemoveCallFromGroupBtnClick(btn) {
   //ids = [<row_id>, <group_id>]
   ids = [ids[2], ids[4]].map(id => parseInt(id));
   console.log(`Removing row ${ids[0]} from group ${ids[1]}`);
-  Shiny.setInputValue("match_calls_1-remove_call_from_group", ids);
+  // Send time to invalidate the input every time; even if the input is the same as previously (disable caching).
+  Shiny.setInputValue("match_calls_1-remove_call_from_group", {"rows": ids, "time": (new Date()).getTime()});
 }
