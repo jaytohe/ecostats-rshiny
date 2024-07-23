@@ -173,8 +173,10 @@ mod_match_calls_server <- function(id, q){
     })
 
     ## Observe changes to the row ids shown on the current page
-    observe({
-      req(input$unmatched_calls_rows_current)
+
+    #observe({
+    #  req(input$unmatched_calls_rows_current)
+    observeEvent(input$unmatched_calls_rows_current, {
       req(frontendData())
 
       # array of base64 images and the frontend row index they correspond to
