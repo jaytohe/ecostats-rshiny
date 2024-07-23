@@ -304,7 +304,6 @@ mod_match_calls_server <- function(id, q){
         )
         )
       }
-
       # Render the accordion and make sure it is centered inside the fluidRow
       out <- bslib::accordion(!!!panels, style="max-width: fit-content; margin-left: auto; margin-right: auto;")
       #golem::print_dev(out)
@@ -317,8 +316,53 @@ mod_match_calls_server <- function(id, q){
     })
 
 
+    # Each time the call_groups list changes,
+    # Update the dropdown of existing groups on the client
+    observeEvent(q$call_groups, {
+      out <- list()
+      for (i in seq_along(q$call_groups)) {
+        call_group <- q$call_groups[[i]]
+        #name <- paste0("Call Group #", i, " | ", "TOA : ", call_group$group_toa)
+        name <- paste0("Call Group #", i) # Only show call group num
+        # A choice is a key-pair value where :
+        # key is the name of the group displayed on the frontend
+        # value is what is sent to the server when the user selects something.
+        # in this case we send the group id.
+        out[[name]] <- call_group$group_id
+      }
+      updateSelectInput(session, "existing_group", choices = out)
+    })
+
+
+    # Add call to existing group logic
+    observeEvent(input$add_to_group, {
+      req(input$existing_group, input$checked_rows, q$call_groups, frontendData())
+      group_id <- as.numeric(input$existing_group)
+
+      for (i in seq_along(q$call_groups)) {
+        call_group <- q$call_groups[[i]]
+        if (call_group$group_id == group_id) {
+          ## Get backend rows
+          backend_rows <- get_backend_rows_by_frontend_id(frontendData(), r$recParsedData, input$checked_rows)
+
+          ## Append the checked row ids to the stored row ids of call_group list
+          call_group$frontend_row_ids <- c(call_group$frontend_row_ids, input$checked_rows)
+
+          ##Append backend rows of new checked calls to stored backend rows of call_group list
+          call_group$backend_rows <- call_group$backend_rows %>% bind_rows(backend_rows)
+
+          ## Insert modified call_group to the reactive values list
+          #golem::print_dev(call_group)
+          q$call_groups[[i]] <- call_group
+          break
+        }
+      }
+    })
+
+
     # Remove call from group logic
     observeEvent(input$remove_call_from_group, {
+      req(q$call_groups)
       row_id = input$remove_call_from_group$rows[[1]]
       group_id = input$remove_call_from_group$rows[[2]]
       removed = FALSE
