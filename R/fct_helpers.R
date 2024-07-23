@@ -50,7 +50,7 @@ parse_rec_data <- function(recordings) {
     # rename columns to standard format
     rename(rec_id = recording_ID, mic_id = mic_ID, toa = GPSDatetime2, bearing = measured_bearing, sex = measured_gender) %>%
     # parse toa as date object
-    mutate(toa = ymd_hms(toa)) %>%
+    mutate(toa = ymd_hms(toa, tz="UTC")) %>%
     # order by toa ascending
     arrange(toa)
 }
