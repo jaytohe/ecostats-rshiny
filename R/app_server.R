@@ -16,5 +16,6 @@ app_server <- function(input, output, session) {
   mod_file_upload_server("file_upload_1", r)
   mod_date_select_server("date_select_1", r)
   mod_match_calls_server("match_calls_1", r)
+  mod_export_calls_server("export_calls_1", r)
   mod_wizard_server("vocostep", 3)
 }
