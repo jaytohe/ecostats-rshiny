@@ -26,6 +26,7 @@ usethis::use_package("leaflet.extras", min_version = TRUE)
 usethis::use_package("leaflet.extras2", min_version = TRUE)
 usethis::use_package("geosphere", min_version = TRUE)
 usethis::use_package("bslib", min_version = TRUE)
+usethis::use_package("base64enc", min_version = TRUE)
 
 attachment::att_amend_desc()
 
@@ -47,6 +48,11 @@ golem::add_module(
 
 golem::add_module(
   name = "bearings_vis"
+)
+
+golem::add_module(
+  name = "export_calls",
+  utils = "out"
 )
 
 ## Add helper functions ----
