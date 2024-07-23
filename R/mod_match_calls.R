@@ -378,12 +378,20 @@ mod_match_calls_server <- function(id, q){
             q$call_groups[[i]]$frontend_row_ids <-  q$call_groups[[i]]$frontend_row_ids[-j]
             q$call_groups[[i]]$backend_rows <-  q$call_groups[[i]]$backend_rows %>% slice(-j)
             removed = TRUE
-          }
-          # If all calls removed
-          if (length(q$call_groups[[i]]$frontend_row_ids) == 0) {
-            golem::print_dev(paste("Removing entire row", i))
-            # Remove the entire call group
-            q$call_groups <- q$call_groups[-i]
+
+            # If all calls removed
+            if (nrow(q$call_groups[[i]]$backend_rows) == 0) {
+              golem::print_dev(paste("Removing entire row", i))
+              # Remove the entire call group
+              q$call_groups <- q$call_groups[-i]
+            }
+            else {
+              ## Update the group id and toa
+              ## We must update the group id because if the removed call is added to another group,
+              ## the two groups may end up having the same id.
+              q$call_groups[[i]]$group_id <- q$call_groups[[i]]$backend_rows$rec_id[[1]]
+              q$call_groups[[i]]$group_toa <- lubridate::format_ISO8601(q$call_groups[[i]]$backend_rows$toa[[1]])
+            }
           }
           break
         }
