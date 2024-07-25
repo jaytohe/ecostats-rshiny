@@ -2,7 +2,7 @@
 #' @description
 #' This function reads all the
 #'
-#' @importFrom dplyr select mutate bind_rows
+#' @importFrom dplyr select mutate
 #' @importFrom purrr map list_rbind
 #' @noRd
 create_capture_history <- function(call_groups) {
