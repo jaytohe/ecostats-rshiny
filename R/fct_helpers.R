@@ -5,7 +5,6 @@
 #' @return The return value, if any, from executing the function.
 #'
 #' @noRd
-#' @importFrom vroom vroom
 #' @importFrom attempt attempt
 #' @importFrom tools file_ext
 read_csv_vroom <- function(datapath, ...) {
