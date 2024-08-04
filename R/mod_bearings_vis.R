@@ -59,8 +59,12 @@ mod_bearings_vis_server <- function(id, r){
         setView(lng = 0, lat = 0, zoom = 3)
     })
 
+    ## Prevent Shiny from suspending communication with leaflet if the calls tab is not visible yet.
+    outputOptions(output, "map", suspendWhenHidden = FALSE)
+
     # Plot the microphone coordinates
     observeEvent(r$micData, {
+      golem::print_dev("rMicData observer called")
       leafletProxy("map") %>%
         clearMarkers() %>%
         addCircleMarkers(
