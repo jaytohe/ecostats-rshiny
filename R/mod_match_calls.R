@@ -67,20 +67,20 @@ mod_match_calls_ui <- function(id) {
 #' @importFrom purrr map
 #' @importFrom fs path path_dir
 #' @noRd
-mod_match_calls_server <- function(id, q){
+mod_match_calls_server <- function(id, r){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
 
-    r <- list(recParsedData = NULL, micData = NULL)
+#    r <- list(recParsedData = NULL, micData = NULL)
 
 
-    absolute_path <- "/home/thinkpad/Documents/Dissertation2024/vocomatcher/data/poc_spectro/"
-    rawRecData <- read.csv("/home/thinkpad/Documents/Dissertation2024/vocomatcher/data/poc_spectro/recordings.csv", tryLogical = F)
-    rawMicData <- read.csv("/home/thinkpad/Documents/Dissertation2024/vocomatcher/data/poc_spectro/mic.csv")
-
-    ##Simulated reactive values for now.
-    r$recParsedData <- parse_rec_data(rawRecData)
-    r$micData <- rawMicData
+    # absolute_path <- "/home/thinkpad/Documents/Dissertation2024/vocomatcher/data/poc_spectro/"
+    # rawRecData <- read.csv("/home/thinkpad/Documents/Dissertation2024/vocomatcher/data/poc_spectro/recordings.csv", tryLogical = F)
+    # rawMicData <- read.csv("/home/thinkpad/Documents/Dissertation2024/vocomatcher/data/poc_spectro/mic.csv")
+    #
+    # ##Simulated reactive values for now.
+    # r$recParsedData <- parse_rec_data(rawRecData)
+    # r$micData <- rawMicData
 
     # This is the main view of the unmatched calls
     frontendData <- reactive({
@@ -100,12 +100,12 @@ mod_match_calls_server <- function(id, q){
 
 
     ### TODO: Change it when we integrate the match_calls module with other all other modules
-    observeEvent(input$checked_rows, q$checked_rows <- input$checked_rows, ignoreNULL = FALSE)
-    observe({q$frontendData <- frontendData()})
-    q$recParsedData <- r$recParsedData
-    q$micData <- r$micData
+    observeEvent(input$checked_rows, r$checked_rows <- input$checked_rows, ignoreNULL = FALSE)
+    observe({r$frontendData <- frontendData()})
+#    r$recParsedData <- r$recParsedData
+#    r$micData <- r$micData
 
-    mod_bearings_vis_server("bearings_vis_1", q)
+    mod_bearings_vis_server("bearings_vis_1", r)
 
     output$unmatched_calls <- renderDT({
       datatable(
@@ -238,12 +238,12 @@ mod_match_calls_server <- function(id, q){
       )
 
       ## Append call group to list of call groups
-      if (is.null(q$call_groups) || (length(q$call_groups) == 0)) {
-        q$call_groups <- list()
-        q$call_groups[[1]] <- call_group
+      if (is.null(r$call_groups) || (length(r$call_groups) == 0)) {
+        r$call_groups <- list()
+        r$call_groups[[1]] <- call_group
       } else {
         golem::print_dev("appended")
-        q$call_groups[[length(q$call_groups)+1]] <- call_group
+        r$call_groups[[length(r$call_groups)+1]] <- call_group
       }
 
     })
@@ -282,11 +282,11 @@ mod_match_calls_server <- function(id, q){
 
   #' Each time the call_groups list changes
   #' Re-render the accordion containing tables of grouped calls
-    observeEvent(q$call_groups, {
+    observeEvent(r$call_groups, {
       panels <- list()
       rows_to_hide <- c()
-      for (i in seq_along(q$call_groups)) {
-        call_group <- q$call_groups[[i]]
+      for (i in seq_along(r$call_groups)) {
+        call_group <- r$call_groups[[i]]
         rows_to_hide <- c(rows_to_hide, call_group$frontend_row_ids)
         panels[[i]] <- bslib::accordion_panel(
           paste0("Call Group #", i, " | ", "TOA : ", call_group$group_toa),
@@ -312,16 +312,17 @@ mod_match_calls_server <- function(id, q){
       # Minus one all rows since javascript/datatable starts index at 0.
       rows_to_hide <- purrr::map(rows_to_hide, \(row_num) row_num-1)
       ## Hide the rows which are in call groups from the main table
+      golem::print_dev(paste("called hide table rows", rows_to_hide))
       session$sendCustomMessage("hideTableRows", rows_to_hide)
-    })
+    }, priority = 2)
 
 
     # Each time the call_groups list changes,
     # Update the dropdown of existing groups on the client
-    observeEvent(q$call_groups, {
+    observeEvent(r$call_groups, {
       out <- list()
-      for (i in seq_along(q$call_groups)) {
-        call_group <- q$call_groups[[i]]
+      for (i in seq_along(r$call_groups)) {
+        call_group <- r$call_groups[[i]]
         #name <- paste0("Call Group #", i, " | ", "TOA : ", call_group$group_toa)
         name <- paste0("Call Group #", i) # Only show call group num
         # A choice is a key-pair value where :
@@ -331,16 +332,16 @@ mod_match_calls_server <- function(id, q){
         out[[name]] <- call_group$group_id
       }
       updateSelectInput(session, "existing_group", choices = out)
-    })
+    }, priority = 1)
 
 
     # Add call to existing group logic
     observeEvent(input$add_to_group, {
-      req(input$existing_group, input$checked_rows, q$call_groups, frontendData())
+      req(input$existing_group, input$checked_rows, r$call_groups, frontendData())
       group_id <- as.numeric(input$existing_group)
 
-      for (i in seq_along(q$call_groups)) {
-        call_group <- q$call_groups[[i]]
+      for (i in seq_along(r$call_groups)) {
+        call_group <- r$call_groups[[i]]
         if (call_group$group_id == group_id) {
           ## Get backend rows
           backend_rows <- get_backend_rows_by_frontend_id(frontendData(), r$recParsedData, input$checked_rows)
@@ -353,7 +354,7 @@ mod_match_calls_server <- function(id, q){
 
           ## Insert modified call_group to the reactive values list
           #golem::print_dev(call_group)
-          q$call_groups[[i]] <- call_group
+          r$call_groups[[i]] <- call_group
           break
         }
       }
@@ -362,35 +363,35 @@ mod_match_calls_server <- function(id, q){
 
     # Remove call from group logic
     observeEvent(input$remove_call_from_group, {
-      req(q$call_groups)
+      req(r$call_groups)
       row_id = input$remove_call_from_group$rows[[1]]
       group_id = input$remove_call_from_group$rows[[2]]
       removed = FALSE
       # Find the call group via linear search
-      for(i in seq_along(q$call_groups)) {
+      for(i in seq_along(r$call_groups)) {
 
-        if ( q$call_groups[[i]]$group_id == group_id) {
+        if ( r$call_groups[[i]]$group_id == group_id) {
           # Find index of the row_id in the frontend_row_ids vector
-          j <- which(q$call_groups[[i]]$frontend_row_ids == row_id)
+          j <- which(r$call_groups[[i]]$frontend_row_ids == row_id)
           # If found
           if (length(j) != 0) {
             #Remove it from frontend row ids
-            q$call_groups[[i]]$frontend_row_ids <-  q$call_groups[[i]]$frontend_row_ids[-j]
-            q$call_groups[[i]]$backend_rows <-  q$call_groups[[i]]$backend_rows %>% slice(-j)
+            r$call_groups[[i]]$frontend_row_ids <-  r$call_groups[[i]]$frontend_row_ids[-j]
+            r$call_groups[[i]]$backend_rows <-  r$call_groups[[i]]$backend_rows %>% slice(-j)
             removed = TRUE
 
             # If all calls removed
-            if (nrow(q$call_groups[[i]]$backend_rows) == 0) {
+            if (nrow(r$call_groups[[i]]$backend_rows) == 0) {
               golem::print_dev(paste("Removing entire row", i))
               # Remove the entire call group
-              q$call_groups <- q$call_groups[-i]
+              r$call_groups <- r$call_groups[-i]
             }
             else {
               ## Update the group id and toa
               ## We must update the group id because if the removed call is added to another group,
               ## the two groups may end up having the same id.
-              q$call_groups[[i]]$group_id <- q$call_groups[[i]]$backend_rows$rec_id[[1]]
-              q$call_groups[[i]]$group_toa <- lubridate::format_ISO8601(q$call_groups[[i]]$backend_rows$toa[[1]])
+              r$call_groups[[i]]$group_id <- r$call_groups[[i]]$backend_rows$rec_id[[1]]
+              r$call_groups[[i]]$group_toa <- lubridate::format_ISO8601(r$call_groups[[i]]$backend_rows$toa[[1]])
             }
           }
           break
