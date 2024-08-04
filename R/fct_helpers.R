@@ -18,10 +18,12 @@ read_csv_vroom <- function(datapath, ...) {
   # If only datapath argument
   if (length(args) == 1) {
     # Append default arguments
-    args <- list(datapath, delim = ",", col_names = TRUE, na = c("NA", "NULL", ""))
+#    args <- list(datapath, delim = ",", col_names = TRUE, na = c("NA", "NULL", ""))
+    args <- list(datapath, tryLogical = F, stringsAsFactors = F)
   }
   # Attempt to call vroom with arguments.
-  return(attempt(do.call(vroom, args)))
+#  return(attempt(do.call(vroom, args)))
+  return(attempt(do.call(read.csv, args)))
 
 }
 
