@@ -6,65 +6,70 @@ var filteredRows = {};
 function hasTableLoaded() {
   return ($.fn.DataTable) && $.fn.DataTable.isDataTable("#match_calls_1-unmatched_calls #DataTables_Table_0");
 }
-
-Shiny.addCustomMessageHandler('showDateTimeSlider', function(e) {
-  //Find the datetime slider element and display it.
-  $("div#match_calls_1-datetime_slider_container")[0].style.visibility = "visible";
-});
+function getTable() {
+  return $("#match_calls_1-unmatched_calls #DataTables_Table_0").DataTable();
+}
 
 
-Shiny.addCustomMessageHandler('hideTableRows', function(r) {
-  const rows = (typeof r == "number") ? [r] : r;
-  console.log(`rows to hide: ${rows}`);
-  rows.forEach(row => filteredRows[row] = true);
-  var table = ($.fn.DataTable) ? $("#match_calls_1-unmatched_calls #DataTables_Table_0").DataTable() : null;
-  // Uncheck all checkboxes
-  table.rows().every(function () {
-      var rowId = this.index();
-      var checkbox = $(this.node()).find('input[type="checkbox"]').prop('checked', false);
+$( document ).ready(function() {
+
+  Shiny.addCustomMessageHandler('showDateTimeSlider', function(e) {
+    //Find the datetime slider element and display it.
+    $("div#match_calls_1-datetime_slider_container")[0].style.visibility = "visible";
   });
-  //Empty the checkboxState
-  checkboxState = {};
-  // Notify the server that there are no checked rows
-   Shiny.setInputValue("match_calls_1-checked_rows", []);
-   // Re-draw the table to apply the filter.
-  table.draw(false);
-});
-
-Shiny.addCustomMessageHandler('showTableRows', function(r) {
-  const rows = (typeof r == "number") ? [r] : r;
-  rows.forEach(row => delete filteredRows[row]);
-  var table = ($.fn.DataTable) ? $("#match_calls_1-unmatched_calls #DataTables_Table_0").DataTable() : null;
-  table.draw(false);
-});
 
 
+  Shiny.addCustomMessageHandler('hideTableRows', function(r) {
+    const rows = (typeof r == "number") ? [r] : r;
+    console.log(`rows to hide: ${rows}`);
+    rows.forEach(row => filteredRows[row] = true);
 
-Shiny.addCustomMessageHandler('filterTableByDate', function(d) {
-  //Query the DOM to find the datatable
-  // Check if Datatable has been initialized
-  var table = ($.fn.DataTable) ? $("#match_calls_1-unmatched_calls #DataTables_Table_0").DataTable() : null;
-  if (table !== null) {
+    if (hasTableLoaded()) {
+        const table = getTable();
+      // Uncheck all checkboxes
+      table.rows().every(function () {
+          var rowId = this.index();
+          var checkbox = $(this.node()).find('input[type="checkbox"]').prop('checked', false);
+      });
+      //Empty the checkboxState
+      checkboxState = {};
+      // Notify the server that there are no checked rows
+       Shiny.setInputValue("match_calls_1-checked_rows", []);
+       // Re-draw the table to apply the filter.
+      table.draw(false);
+    }
+  });
+
+  Shiny.addCustomMessageHandler('showTableRows', function(r) {
+    const rows = (typeof r == "number") ? [r] : r;
+    rows.forEach(row => delete filteredRows[row]);
+    if (hasTableLoaded()) {
+      getTable().draw(false);
+    }
+  });
+
+
+
+  Shiny.addCustomMessageHandler('filterTableByDate', function(d) {
     // Update the date limit values.
     dateLimits.from = d.from;
     dateLimits.to = d.to;
-    //Redraw the table;
-    //The filtering fuction is called first internally before drawing.
-    //setTimeout(function() {
-    table.draw(false);
-   // }, 300);
-  }
-});
+    if (hasTableLoaded()) {
+      //Redraw the table;
+      getTable().draw(false);
+    }
+  });
 
-Shiny.addCustomMessageHandler('updateTableSpectrogramImages', function(arr) {
-  for (const imageObj of arr) {
-    //Update the state of spectrogram images
-    spectroImages[imageObj.rowId] = imageObj.src;
-  }
-  // Update the images if the table has loaded
-  if (hasTableLoaded()) {
-    refreshTableImages($("#match_calls_1-unmatched_calls #DataTables_Table_0").DataTable());
-  }
+  Shiny.addCustomMessageHandler('updateTableSpectrogramImages', function(arr) {
+    for (const imageObj of arr) {
+      //Update the state of spectrogram images
+      spectroImages[imageObj.rowId] = imageObj.src;
+    }
+    // Update the images if the table has loaded
+    if (hasTableLoaded()) {
+      refreshTableImages(getTable());
+    }
+  });
 });
 
 function refreshTableImages(table) {
