@@ -19,6 +19,7 @@
 usethis::use_package("vroom", min_version = TRUE)
 usethis::use_package("lubridate", min_version = TRUE)
 usethis::use_package("shinyWidgets", min_version = TRUE)
+usethis::use_package("shinyFiles", min_version = TRUE)
 usethis::use_package("magrittr", min_version = TRUE)
 usethis::use_package("DT", min_version = TRUE)
 usethis::use_package("leaflet", min_version = TRUE)
