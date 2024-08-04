@@ -15,11 +15,10 @@ app_ui <- function(request) {
       h1("vocomatcher"),
       mod_wizard_ui("vocostep",
                     list(
-                      mod_match_calls_ui("match_calls_1"),
-                      mod_export_calls_ui("export_calls_1"),
                       mod_file_upload_ui("file_upload_1"),
-                      mod_date_select_ui("date_select_1")
-                      #mod_match_calls_ui("match_calls_1")
+                      mod_date_select_ui("date_select_1"),
+                      mod_match_calls_ui("match_calls_1"),
+                      mod_export_calls_ui("export_calls_1")
                      ),
                     doneButton=actionButton("done", "Submit"))
     )
