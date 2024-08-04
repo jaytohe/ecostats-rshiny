@@ -51,8 +51,8 @@ mod_file_upload_server <- function(id, r){
     ns <- session$ns
 
     volumes <- c(Home = path_home(),  getVolumes()())
-    shinyFileChoose(input, "microphones", session = session, roots = volumes)
-    shinyFileChoose(input, "recordings", session = session, roots = volumes)
+    shinyFileChoose(input, "microphones", session = session, roots = volumes, filetypes = c("csv"))
+    shinyFileChoose(input, "recordings", session = session, roots = volumes, filetypes = c("csv"))
 
     observeEvent(input$microphones, {
       req(!is.integer(input$microphones))
