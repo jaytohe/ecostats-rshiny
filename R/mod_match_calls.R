@@ -65,22 +65,12 @@ mod_match_calls_ui <- function(id) {
 #' @importFrom DT renderDT datatable JS
 #' @importFrom lubridate format_ISO8601
 #' @importFrom purrr map
-#' @importFrom fs path path_dir
+#' @importFrom fs path path_dir path_real
+#' @importFrom attempt attempt is_try_error try_catch
 #' @noRd
 mod_match_calls_server <- function(id, r){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
-
-#    r <- list(recParsedData = NULL, micData = NULL)
-
-
-    # absolute_path <- "/home/thinkpad/Documents/Dissertation2024/vocomatcher/data/poc_spectro/"
-    # rawRecData <- read.csv("/home/thinkpad/Documents/Dissertation2024/vocomatcher/data/poc_spectro/recordings.csv", tryLogical = F)
-    # rawMicData <- read.csv("/home/thinkpad/Documents/Dissertation2024/vocomatcher/data/poc_spectro/mic.csv")
-    #
-    # ##Simulated reactive values for now.
-    # r$recParsedData <- parse_rec_data(rawRecData)
-    # r$micData <- rawMicData
 
     # This is the main view of the unmatched calls
     frontendData <- reactive({
@@ -99,12 +89,11 @@ mod_match_calls_server <- function(id, r){
     })
 
 
-    ### TODO: Change it when we integrate the match_calls module with other all other modules
+    # Update the reactive checked rows and frontend data
     observeEvent(input$checked_rows, r$checked_rows <- input$checked_rows, ignoreNULL = FALSE)
     observe({r$frontendData <- frontendData()})
-#    r$recParsedData <- r$recParsedData
-#    r$micData <- r$micData
 
+    # Call the bearings visualization module server and pass-in all reactive values
     mod_bearings_vis_server("bearings_vis_1", r)
 
     output$unmatched_calls <- renderDT({
@@ -193,21 +182,30 @@ mod_match_calls_server <- function(id, r){
           backendRow <- filter(r$recParsedData, rec_id == backendRecID)
 
           #Get relative path of spectrogram from backend
-          spectroRelativePath <- backendRow$spectrogram
+          spectroRelativePath <- path(backendRow$spectrogram)
 
           # Get the absolute path to the image according to csv file path provided by shinyFiles
-          spectroAbsPath <- path("/home/thinkpad/Documents/Dissertation2024/vocomatcher/data/poc_spectro/recordings.csv") %>% # path(csvMetaData()$datapath) %>%
-            path_dir() %>%
-            path(spectroRelativePath) %>%
-            as.character
+          if(is.null(r$recDataAbsFilePath)) {
+            golem::invoke_js("erroralert", list(title="Failed to read file path", msg="The recordings csv file path was not provided."))
+            break;
+          }
+          else {
+            # Construct an absolute path to the spectrogram image
+            # fs::path_real should make sure that this works both on UNIX and Windows and that the file exists
+            # If the file does not exist, throw error and break out of loop
+            spectroAbsPath <- attempt(path_real(path(path_dir(r$recDataAbsFilePath), spectroRelativePath)))
+            if (is_try_error(spectroAbsPath)) {
+              golem::invoke_js("erroralert", list(title="Failed to read file path", msg=spectroAbsPath))
+              break;
+            }
+            ## Read the input image file and base64 encode it
+            b64data <- encode_image(spectroAbsPath)
 
-          ## Read the input image file and base64 encode it
-          b64data <- encode_image(spectroAbsPath)
+            #i minus one since array indexing in javascript begins at zero (like any other normal language!)
+            encodedImages[[idx]] <- list(rowId = i-1, src=b64data)
 
-          #i minus one since array indexing in javascript begins at zero (like any other normal language!)
-          encodedImages[[idx]] <- list(rowId = i-1, src=b64data)
-
-          idx = idx + 1;
+            idx = idx + 1;
+          }
       }
       # Send JSON array to client of format [ {rowId: <num>, src: <base64string>} ]
       session$sendCustomMessage("updateTableSpectrogramImages", encodedImages)

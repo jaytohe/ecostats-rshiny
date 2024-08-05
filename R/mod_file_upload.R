@@ -75,8 +75,10 @@ mod_file_upload_server <- function(id, r){
         golem::invoke_js("erroralert", list(title="Recordings CSV read error!", msg=recData))
       } else {
         output$tblRecs <- renderTable(head(recData))
-        # Add recData to global reactiveValues
+        # Insert the recordings data to the reactive values
         r$recData <- recData
+        # Save the absolute file path of the loaded recordings csv
+        r$recDataAbsFilePath <- f$datapath
       }
     })
   })
