@@ -16,7 +16,6 @@
 ## Dependencies ----
 ## Amend DESCRIPTION with dependencies read from package code parsing
 ## install.packages('attachment') # if needed.
-usethis::use_package("vroom", min_version = TRUE)
 usethis::use_package("lubridate", min_version = TRUE)
 usethis::use_package("shinyWidgets", min_version = TRUE)
 usethis::use_package("shinyFiles", min_version = TRUE)
@@ -28,7 +27,10 @@ usethis::use_package("leaflet.extras2", min_version = TRUE)
 usethis::use_package("geosphere", min_version = TRUE)
 usethis::use_package("bslib", min_version = TRUE)
 usethis::use_package("base64enc", min_version = TRUE)
-
+usethis::use_package("attempt", min_version = TRUE)
+usethis::use_package("purrr", min_version = TRUE)
+usethis::use_package("config", min_version = TRUE)
+usethis::use_package("tools")
 attachment::att_amend_desc()
 
 ## Add modules ----

@@ -4,11 +4,10 @@
 #'
 #' @param id,input,output,session Internal parameters for {shiny}.
 #'
-#' @noRd
-#'
 #' @importFrom shiny NS tagList
 #' @importFrom DT DTOutput
 #' @importFrom lubridate ymd_hms
+#' @noRd
 mod_match_calls_ui <- function(id) {
   ns <- NS(id)
   tagList(
@@ -61,7 +60,6 @@ mod_match_calls_ui <- function(id) {
 
 #' match_calls Server Functions
 #' @import dplyr
-#'
 #' @importFrom DT renderDT datatable JS
 #' @importFrom lubridate format_ISO8601
 #' @importFrom purrr map
