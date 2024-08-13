@@ -11,7 +11,8 @@ experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](h
 coverage](https://codecov.io/gh/jaytohe/ecostats-rshiny/branch/main/graph/badge.svg)](https://app.codecov.io/gh/jaytohe/ecostats-rshiny?branch=main)
 <!-- badges: end -->
 
-The goal of vocomatcher is to …
+The goal of vocomatcher is to assist with matching and deduplicating
+animal calls in microphone array based acoustic surveys.
 
 ## Installation
 
@@ -23,35 +24,43 @@ You can install the development version of vocomatcher from
 devtools::install_github("jaytohe/ecostats-rshiny")
 ```
 
-## Example
+If you want to try vocomatcher with the example data provided under
+`data/poc_spectro`, there are two options:
 
-This is a basic example which shows you how to solve a common problem:
+## Option 1
+
+1.  `git clone https://github.com/jaytohe/ecostats-rshiny.git`
+2.  Open up RStudio in the directory of the cloned repository
+3.  Install the `golem` package
+4.  Open `dev/01_start.R` and run it.
+5.  Open `dev/02_start.R` and run it.
+6.  Then in the terminal of RStudio, type `golem::run_dev()`
+7.  This should launch the Shiny app on your browser.
+8.  From Vocomatcher, in the Import CSVs screen, you can then navigate
+    to the directory of the cloned repo and find the example data under
+    `data/poc_spectro`.
+9.  In said directory, `mic.csv` is the microphone location coordinates
+    csv file, `recordins.csv` is the recorded calls csv.
+
+## Option 2
+
+1.  Open up an R terminal and type:
 
 ``` r
-library(vocomatcher)
-## basic example code
+# install.packages("devtools")
+devtools::install_github("jaytohe/ecostats-rshiny")
 ```
 
-What is special about using `README.Rmd` instead of just `README.md`?
-You can include R chunks like so:
+This should install all the dependencies of vocomatcher and vocomatcher
+itself.
 
-``` r
-summary(cars)
-#>      speed           dist       
-#>  Min.   : 4.0   Min.   :  2.00  
-#>  1st Qu.:12.0   1st Qu.: 26.00  
-#>  Median :15.0   Median : 36.00  
-#>  Mean   :15.4   Mean   : 42.98  
-#>  3rd Qu.:19.0   3rd Qu.: 56.00  
-#>  Max.   :25.0   Max.   :120.00
-```
+2.  Clone the repo (from a regular shell):
 
-You’ll still need to render `README.Rmd` regularly, to keep `README.md`
-up-to-date. `devtools::build_readme()` is handy for this.
+`git clone https://github.com/jaytohe/ecostats-rshiny.git`
 
-You can also embed plots, for example:
+3.  Back on the R terminal, run the Shiny app using:
+    `vocomatcher::run_app()`
 
-<img src="man/figures/README-pressure-1.png" width="100%" />
+4.  Follow steps 8, 9 from Option 1.
 
-In that case, don’t forget to commit and push the resulting figure
-files, so they display on GitHub and CRAN.
+*Note: The example data is not real.*
