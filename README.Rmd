@@ -22,6 +22,11 @@ knitr::opts_chunk$set(
 
 The goal of vocomatcher is to assist with matching and deduplicating animal calls in microphone array based acoustic surveys.
 
+
+## R Version
+The app has only been tested on R version 4.4.1 (2024-06-14).
+
+
 ## Installation
 
 You can install the development version of vocomatcher from [GitHub](https://github.com/) with:

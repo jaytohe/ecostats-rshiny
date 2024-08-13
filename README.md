@@ -14,6 +14,10 @@ coverage](https://codecov.io/gh/jaytohe/ecostats-rshiny/branch/main/graph/badge.
 The goal of vocomatcher is to assist with matching and deduplicating
 animal calls in microphone array based acoustic surveys.
 
+## R Version
+
+The app has only been tested on R version 4.4.1 (2024-06-14).
+
 ## Installation
 
 You can install the development version of vocomatcher from
@@ -40,7 +44,7 @@ If you want to try vocomatcher with the example data provided under
     to the directory of the cloned repo and find the example data under
     `data/poc_spectro`.
 9.  In said directory, `mic.csv` is the microphone location coordinates
-    csv file, `recordins.csv` is the recorded calls csv.
+    csv file, `recordings.csv` is the recorded calls csv.
 
 ## Option 2
 
