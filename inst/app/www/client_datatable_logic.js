@@ -2,6 +2,7 @@ const dateLimits = {"from" : null, "to" : null};
 var checkboxState = {};
 var spectroImages = {};
 var filteredRows = {};
+var clickedRowIndex = null; // the clicked row from the user-select event
 
 function hasTableLoaded() {
   return ($.fn.DataTable) && $.fn.DataTable.isDataTable("#match_calls_1-unmatched_calls #DataTables_Table_0");
@@ -122,37 +123,37 @@ function onTableLoadFinish(table) {
   //Register event listers for all checkboxes to keep track of checked state
    registerCheckboxListeners(table);
 
-
-  // Prevent the first column from being selectable
   table.on('user-select', function(e, dt, type, cell, originalEvent) {
     console.log("==USER-SELECT EVENT==")
+    // Update the clicked row index to control whether the deselect event fires.
+    clickedRowIndex = cell.index().row;
+    // Prevent the first column from being selectable
    if (cell.index().column === 2) {
     e.preventDefault();
    }
  });
-  table.on('select', function(e, dt, type, indexes) {
+  table.on('select', function(e, dt, type, indices) {
       if (type === 'row') {
-
           // Backup all checkboxes
           //storeCheckboxState(table);
+          console.log("SELECTION OCCURED")
+          const toaColumnIndex = table.column("toa:name").index();
+          const selectedToa = table.row(indices[0]).data()[toaColumnIndex];
 
-          const selectedData = table.rows(indexes).data()[0];
-          const selectedToa = selectedData[table.column("toa:name").index()];
+          table.column("timediff:name").nodes().each(function(cell, i) {
 
-          // Iterate through all rows to calculate the time difference
-          table.rows().every(function (rowIdx, tableLoop, rowLoop) {
-              const rowData = this.data();
-              const rowToa = rowData[table.column("toa:name").index()];
+            // Get the toa value of row i
+            const rowToa = table.row(i).data()[toaColumnIndex];
 
-              // Calculate the time difference between the selected row and the current row
-              const timeDifference = calculateDateTimeDifference(selectedToa, rowToa);
+            // Calculate the time difference between the selected row and row i
+            const timeDifference = calculateDateTimeDifference(selectedToa, rowToa);
 
-              // Update the timediff column with the calculated time difference
-              rowData[table.column("timediff:name").index()] = timeDifference;
-              this.data(rowData).invalidate();
+            // Update timediff cell of row i with new time difference value
+            // Invalidate only the cells of the timediff column -> Improves performance
+            table.cell(cell)
+              .data(timeDifference)
+              .invalidate();
           });
-
-
           // Redraw the table to reflect the changes
           table.draw(false);
 
@@ -161,27 +162,26 @@ function onTableLoadFinish(table) {
       }
   });
 
-  table.on('deselect',  function(e, dt, type, indexes) {
+  table.on('deselect',  function(e, dt, type, indices) {
 
-    // Backup all checkboxes
-    //storeCheckboxState(table);
+    // Only run the deselect event whenever the user clicks on the last selected row.
+    if (indices[0] === clickedRowIndex) {
+        console.log("DESLECT FIRED - SAME ROW")
 
-    // Loop through all rows
-    table.rows().every(function (rowIdx, tableLoop, rowLoop) {
-       const rowData = this.data();
+      // Set all cell values in the time diff column to "-".
+      // Invalidate only these cells to improve performance
+      table.column("timediff:name").nodes().each(function(cell, i) {
+        table.cell(cell)
+          .data("-")
+          .invalidate();
+      });
 
-      // Set the timediff column equal to "-"
-      rowData[table.column("timediff:name").index()] = "-";
+      // Redraw the table to reflect the changes
+      table.draw(false);
 
-      this.data(rowData).invalidate();
-    });
-
-
-    // Redraw the table to reflect the changes
-    table.draw(false);
-
-    // Restore all checked boxes
-    restoreCheckboxState(table);
+      // Restore all checked boxes
+      restoreCheckboxState(table);
+    }
   })
 
 
