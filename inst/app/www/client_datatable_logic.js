@@ -60,16 +60,15 @@ $( document ).ready(function() {
     }
   });
 
-  Shiny.addCustomMessageHandler('updateTableSpectrogramImages', function(obj) {
-
+  Shiny.addCustomMessageHandler('updateTableSpectrogramImages', function(arr) {
     let updated = false;
-    Object.keys(obj).forEach(function (key) {
-      const base64Img = obj[key];
-      const rowId = parseInt(key);
+    for (const imageObj of arr) {
       //Update the state of spectrogram images
-      spectroImages[rowId] = base64Img;
-      updated = true;
-    });
+      spectroImages[imageObj.rowId] = imageObj.src;
+      if (!updated) {
+        updated = true;
+      }
+    }
     // Update the images if new images have been added and the table has finished loading.
     if (updated && hasTableLoaded()) {
       refreshTableImages(getTable());

@@ -167,10 +167,11 @@ mod_match_calls_server <- function(id, r){
       req(frontendData())
       # named list of base64 images where name is the row_id-1 and value is base64 string.
       encodedImages <- list()
+      idx <- 1
       added_rows <- FALSE # flag to check if any new rows were processed
       ## For each row that is visible on the current page of the table
       for (i in input$unmatched_calls_rows_current) {
-        key <- as.character(i-1)
+        key <- i-1
           if (key %not_in% processedRows) {
             golem::print_dev(paste("ADDING KEY", key))
           # Get row from backend using frontend row id.
@@ -202,18 +203,19 @@ mod_match_calls_server <- function(id, r){
             b64data <- encode_image(spectroAbsPath)
 
             #i minus one since array indexing in javascript begins at zero (like any other normal language!)
-            encodedImages[[key]] <- b64data #list(rowId = i-1, src=b64data)
+            encodedImages[[idx]] <- list(rowId = key, src=b64data)
 
             # Mark this row as processed
             processedRows <<- c(processedRows, key)
             if (!added_rows) {
               added_rows <- TRUE
             }
+            idx <- idx + 1
           }
           }
       }
       if (added_rows) { # Only inform the client of new spectrogram images, not old ones.
-        # Send JSON object to client of format {rowId <string> : base64Image <string>}
+        # Send JSON array to client of format [ {rowId: <num>, src: <base64string>} ]
         session$sendCustomMessage("updateTableSpectrogramImages", encodedImages)
       }
     })
