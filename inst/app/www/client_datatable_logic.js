@@ -61,12 +61,16 @@ $( document ).ready(function() {
   });
 
   Shiny.addCustomMessageHandler('updateTableSpectrogramImages', function(arr) {
+    let updated = false;
     for (const imageObj of arr) {
       //Update the state of spectrogram images
       spectroImages[imageObj.rowId] = imageObj.src;
+      if (!updated) {
+        updated = true;
+      }
     }
-    // Update the images if the table has loaded
-    if (hasTableLoaded()) {
+    // Update the images if new images have been added and the table has finished loading.
+    if (updated && hasTableLoaded()) {
       refreshTableImages(getTable());
     }
   });
@@ -74,18 +78,32 @@ $( document ).ready(function() {
 
 function refreshTableImages(table) {
   console.log("REFRESHING IMAGES");
-  console.log(Object.keys(spectroImages))
+  console.log(Object.keys(spectroImages));
   let invalidated = false;
-  table.column("spectrogram:name").nodes().each(function(cell, i) {
-    if (typeof spectroImages[i] !== "undefined") {
-      table.cell(cell).data(`<img src=${spectroImages[i]} width="50px">`);
-      table.cell(cell).invalidate();
-      invalidated = true;
-    }
-  });
+
+  // Update and invalidate all the cells whose rows are specified in spectroImages
+  for (const [key, value] of Object.entries(spectroImages)) {
+    const row = parseInt(key);
+    table.cell(row, "spectrogram:name")
+      .data(`<img src=${value} width="50px">`)
+      .invalidate();
+    invalidated = true;
+  }
   if (invalidated) {
     table.draw(false);
   }
+  //Empty the spectrograms object to save memory
+  //We can retrieve the downloaded spectrogram images from the table
+  spectroImages = {};
+}
+
+function getSpectroImageByRow(row) {
+  const table = getTable();
+  // Access the data directly from the cell
+  const cellData = table.cell(row, "spectrogram:name").node();
+  // Extract the src attribute from the first child if it exists
+  const imgSrc = cellData.querySelector("img")?.getAttribute("src");
+  return imgSrc || null;
 }
 
 function registerCheckboxListeners(table) {

@@ -159,18 +159,21 @@ mod_match_calls_server <- function(id, r){
 
     })
 
+    # Keep track of which rows' spectrogram images have already been read.
+    # Avoid re-reading spectrograms images for already processed rows.
+    processedRows <- c()
     ## Observe changes to the row ids shown on the current page
-
-    #observe({
-    #  req(input$unmatched_calls_rows_current)
     observeEvent(input$unmatched_calls_rows_current, {
       req(frontendData())
-
-      # array of base64 images and the frontend row index they correspond to
+      # named list of base64 images where name is the row_id-1 and value is base64 string.
       encodedImages <- list()
       idx <- 1
+      added_rows <- FALSE # flag to check if any new rows were processed
       ## For each row that is visible on the current page of the table
       for (i in input$unmatched_calls_rows_current) {
+        key <- i-1
+          if (key %not_in% processedRows) {
+            golem::print_dev(paste("ADDING KEY", key))
           # Get row from backend using frontend row id.
           backendRecID <- frontendData() %>%
             slice(i) %>%
@@ -200,13 +203,21 @@ mod_match_calls_server <- function(id, r){
             b64data <- encode_image(spectroAbsPath)
 
             #i minus one since array indexing in javascript begins at zero (like any other normal language!)
-            encodedImages[[idx]] <- list(rowId = i-1, src=b64data)
+            encodedImages[[idx]] <- list(rowId = key, src=b64data)
 
-            idx = idx + 1;
+            # Mark this row as processed
+            processedRows <<- c(processedRows, key)
+            if (!added_rows) {
+              added_rows <- TRUE
+            }
+            idx <- idx + 1
+          }
           }
       }
-      # Send JSON array to client of format [ {rowId: <num>, src: <base64string>} ]
-      session$sendCustomMessage("updateTableSpectrogramImages", encodedImages)
+      if (added_rows) { # Only inform the client of new spectrogram images, not old ones.
+        # Send JSON array to client of format [ {rowId: <num>, src: <base64string>} ]
+        session$sendCustomMessage("updateTableSpectrogramImages", encodedImages)
+      }
     })
 
 
