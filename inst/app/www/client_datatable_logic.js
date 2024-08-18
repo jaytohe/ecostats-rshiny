@@ -92,6 +92,18 @@ function refreshTableImages(table) {
   if (invalidated) {
     table.draw(false);
   }
+  //Empty the spectrograms object to save memory
+  //We can retrieve the downloaded spectrogram images from the table
+  spectroImages = {};
+}
+
+function getSpectroImageByRow(row) {
+  const table = getTable();
+  // Access the data directly from the cell
+  const cellData = table.cell(row, "spectrogram:name").node();
+  // Extract the src attribute from the first child if it exists
+  const imgSrc = cellData.querySelector("img")?.getAttribute("src");
+  return imgSrc || null;
 }
 
 function registerCheckboxListeners(table) {

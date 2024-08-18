@@ -1,13 +1,14 @@
 $( document ).ready(function() {
   // Click event listener for the show spectrograms button
+
   $("#show_spectrograms").on("click", function() {
-    if ((typeof checkboxState !== "undefined") && (typeof spectroImages !== "undefined")) {
+    if (typeof checkboxState !== "undefined") {
 
       //Create array of [<row_id>, <associated spectrogram image>]
       const checkedImages = Object.entries(checkboxState)
       .filter(state => state[1])//filter by checked : true
       .map(state => state[0]) // extract only row ids
-      .map(id => [parseInt(id), spectroImages[id]]);
+      .map(id => [parseInt(id), getSpectroImageByRow(id)]);
 
         console.log(checkedImages);
       // Generate new HTML content
