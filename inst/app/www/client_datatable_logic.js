@@ -78,15 +78,17 @@ $( document ).ready(function() {
 
 function refreshTableImages(table) {
   console.log("REFRESHING IMAGES");
-  console.log(Object.keys(spectroImages))
+  console.log(Object.keys(spectroImages));
   let invalidated = false;
-  table.column("spectrogram:name").nodes().each(function(cell, i) {
-    if (typeof spectroImages[i] !== "undefined") {
-      table.cell(cell).data(`<img src=${spectroImages[i]} width="50px">`);
-      table.cell(cell).invalidate();
-      invalidated = true;
-    }
-  });
+
+  // Update and invalidate all the cells whose rows are specified in spectroImages
+  for (const [key, value] of Object.entries(spectroImages)) {
+    const row = parseInt(key);
+    table.cell(row, "spectrogram:name")
+      .data(`<img src=${value} width="50px">`)
+      .invalidate();
+    invalidated = true;
+  }
   if (invalidated) {
     table.draw(false);
   }
